@@ -1,0 +1,15 @@
+namespace IM.FuelMgmt.Domain.Model
+{
+    using System;
+
+    public class Samsung : BaseEqualityAuditableEntity<Samsung>, IInterfacingEntity
+    {
+        private bool canceled;
+        public int Quantity { get; set; }
+
+        public void MarkAsCanceled()
+        {
+            canceled = true;
+        }
+    }
+}
