@@ -6,14 +6,14 @@
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v5.0": {
-      "Pdbc.Cli.App/1.0.0": {
+      "PdbcCli/1.0.0": {
         "dependencies": {
           "Microsoft.Build.Locator": "1.4.1",
           "Microsoft.CodeAnalysis.CSharp.Workspaces": "4.1.0",
           "Microsoft.CodeAnalysis.Workspaces.MSBuild": "4.1.0"
         },
         "runtime": {
-          "Pdbc.Cli.App.dll": {}
+          "PdbcCli.dll": {}
         }
       },
       "Humanizer.Core/2.2.0": {
@@ -1127,7 +1127,7 @@
     }
   },
   "libraries": {
-    "Pdbc.Cli.App/1.0.0": {
+    "PdbcCli/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
