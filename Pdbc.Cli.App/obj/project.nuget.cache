@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "o9GUMxk3c9TpY+Ryf4K5I6nfuHinYWnlsgMz7p61LdwTUOm6P6VNNwld7mNGLRIPLKph/T227bpb0BSGMQ5VLg==",
+  "dgSpecHash": "KxcFgQo1V+CZ2LuP/i9hnYmN+MxJ92ylBwpxcpdt8DZAwQHftNA+QO54WYEFX8F+Ik+sb+Bd0qNvJ7vHTR0igg==",
   "success": true,
   "projectFilePath": "C:\\repos\\Pdbc\\pdbc.cli\\Pdbc.Cli.App\\Pdbc.Cli.App.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\PDB\\.nuget\\packages\\commandlineparser\\2.8.0\\commandlineparser.2.8.0.nupkg.sha512",
     "C:\\Users\\PDB\\.nuget\\packages\\humanizer.core\\2.2.0\\humanizer.core.2.2.0.nupkg.sha512",
     "C:\\Users\\PDB\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\5.0.0\\microsoft.bcl.asyncinterfaces.5.0.0.nupkg.sha512",
     "C:\\Users\\PDB\\.nuget\\packages\\microsoft.build.framework\\16.5.0\\microsoft.build.framework.16.5.0.nupkg.sha512",

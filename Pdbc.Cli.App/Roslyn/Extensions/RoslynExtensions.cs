@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Pdbc.Cli.App.Model;
 
 namespace Pdbc.Cli.App
 {
@@ -51,15 +54,24 @@ namespace Pdbc.Cli.App
             return syntax;
         }
 
-        public static MethodDeclarationSyntax AddMethodParameter(this MethodDeclarationSyntax classDeclarationSyntax, 
+        public static MethodDeclarationSyntax AddMethodParameter(this MethodDeclarationSyntax syntax, 
             string parameterType,
             String parameterName)
         {
-            return classDeclarationSyntax
+            return syntax
                 .AddParameterListParameters(SyntaxFactory.Parameter(SyntaxFactory.Identifier(parameterName))
                     .WithType(SyntaxFactory.ParseTypeName(parameterType)));
         }
+        public static MethodDeclarationSyntax AddMethodParameters(this MethodDeclarationSyntax syntax,
+            IList<PropertyItem> items)
+        {
+            foreach (var item in items)
+            {
+                syntax = AddMethodParameter(syntax, item.Type, item.Name);
+            }
 
+            return syntax;
+        }
         public static MethodDeclarationSyntax AddMethodBody(this MethodDeclarationSyntax classDeclarationSyntax,
             string body)
         {

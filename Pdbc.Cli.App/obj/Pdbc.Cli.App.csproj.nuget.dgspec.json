@@ -41,6 +41,10 @@
         "net5.0": {
           "targetAlias": "net5.0",
           "dependencies": {
+            "CommandLineParser": {
+              "target": "Package",
+              "version": "[2.8.0, )"
+            },
             "Microsoft.Build.Locator": {
               "target": "Package",
               "version": "[1.4.1, )"

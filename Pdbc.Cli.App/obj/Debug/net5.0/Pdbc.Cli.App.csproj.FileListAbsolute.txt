@@ -97,3 +97,5 @@ C:\repos\Pdbc\pdbc.cli\Pdbc.Cli.App\obj\Debug\net5.0\PdbcCli.dll
 C:\repos\Pdbc\pdbc.cli\Pdbc.Cli.App\obj\Debug\net5.0\refint\PdbcCli.dll
 C:\repos\Pdbc\pdbc.cli\Pdbc.Cli.App\obj\Debug\net5.0\PdbcCli.pdb
 C:\repos\Pdbc\pdbc.cli\Pdbc.Cli.App\obj\Debug\net5.0\ref\PdbcCli.dll
+C:\repos\Pdbc\pdbc.cli\Pdbc.Cli.App\bin\Debug\net5.0\CommandLine.dll
+C:\repos\Pdbc\pdbc.cli\Pdbc.Cli.App\bin\Debug\net5.0\cli-configuration.json

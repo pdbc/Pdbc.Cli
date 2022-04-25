@@ -1,26 +1,34 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Pdbc.Cli.App.Model;
+using Pdbc.Cli.App.Roslyn;
+using Pdbc.Cli.App.Roslyn.Extensions;
 using Pdbc.Cli.App.Visitors;
 
 namespace Pdbc.Cli.App
 {
     public class CodeGenerationService
     {
-        private readonly RoslynGenerationContext _context;
+        private readonly RoslynSolutionContext _roslynSolutionContext;
+        private readonly GenerationContext _generationContext;
         private readonly RoslynGenerator _roslynGenerator;
-        private readonly FileHelperService _fileHelperService;
-        
 
-        public CodeGenerationService(RoslynGenerationContext context)
+        private readonly FileHelperService _fileHelperService;
+
+        public CodeGenerationService(RoslynSolutionContext roslynSolutionContext, GenerationContext generationContext)
         {
-            _context = context;
-            _roslynGenerator = new RoslynGenerator();
+            _roslynSolutionContext = roslynSolutionContext;
+            _generationContext = generationContext;
             _fileHelperService = new FileHelperService();
+
+            _roslynGenerator = new RoslynGenerator(_fileHelperService);
         }
 
         /// <summary>
@@ -28,56 +36,65 @@ namespace Pdbc.Cli.App
         /// </summary>
         /// <param name="entityName"></param>
         /// <returns></returns>
-        public async Task SetupEntity(String entityName)
+        public async Task SetupEntity()
         {
-            await GenerateEntity(entityName);
-            await GenerateEntityUnitTest(entityName);
-
-            await GenerateRepository(entityName);
-            await GenerateRepositoryBaseIntegrationTests(entityName);
-            await GenerateEntityMappingConfiguration(entityName);
-            
+            await GenerateEntity();
+            await GenerateEntityUnitTest();
+            await GenerateEntityTestDataBuilder();
 
 
-            //await GenerateEntityMappingConfiguration(dataProject, "Samsung");
+            await GenerateRepositoryInterface();
+            await GenerateRepository();
+            await GenerateRepositoryBaseIntegrationTests();
+            await GenerateRepositoryQueriesIntegrationTests();
+
+            await GenerateEntityMappingConfiguration();
+            await AppendDatabaseCollectionToDbContext();
         }
 
-
-        public async Task GenerateEntity(string entityName)
+        #region Domain Class + UnitTest skeleton
+        public async Task GenerateEntity()
         {
-            // Get all classes from the project
-            var classes = await _roslynGenerator.GetclassesFromProject(_context.DomainProject);
-            var entity = classes.FirstOrDefault(x => x.Identifier.ValueText == entityName);
-            if (entity != null)
+            var className = _generationContext.Parameters.EntityName;
+
+            var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("Domain");
+
+            var path = roslynProjectContext.GetPath("Model");
+            var filename = $"{className}.cs";
+            var fullFilename = Path.Combine(path, filename);
+            
+            // Generate the entity
+           
+            var entity = await roslynProjectContext.GetClassByName(className);
+            if (entity == null)
             {
-                // Entity already exist in the project, no need to generate it
-                return;
+                var entityNamespace = roslynProjectContext.GetNamespace("Model");
+                var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System", "Aertssen.Framework.Audit.Core.Model.Base" });
+
+                // generate the class
+                entity = await _roslynGenerator.GeneratePublicClass(
+                    fullFilename,
+                    @namespace,
+                    className,
+                    
+                    new[] { $"BaseEquatableAuditableEntity<{className}>", "IInterfacingEntity" }
+                );
+                
             }
 
-            var entityNamespace = _context.GetDomainNamespace("Model");
+            // append properties
+            entity = await _roslynGenerator.AppendProperty(fullFilename, entity, new PropertyItem( "String", "ExternalSystem"));
+            entity = await _roslynGenerator.AppendProperty(fullFilename, entity, new PropertyItem("String", "ExternalIdentification"));
 
-            // Generation Code
-            var @namespace = _roslynGenerator.CreateNamespaceDeclaration(entityNamespace)
-                .AddUsingStatements("System", "Aertssen.Framework.Audit.Core.Model.Base");
-            
-            //  Create a class
-            var classDeclaration = _roslynGenerator.CreateClassDeclaration(entityName)
-                .AsPublic()
-                .AddBaseClasses($"BaseEquatableAuditableEntity<{entityName}>", "IInterfacingEntity");
+            entity = await _roslynGenerator.AppendProperty(fullFilename, entity, new PropertyItem("DateTimeOffset", "DateModified"));
+            entity = await _roslynGenerator.AppendPublicOverridableMethod(fullFilename, entity, new MethodItem("bool", "ShouldAuditPropertyChangeFor"),
+                new List<PropertyItem>()
+                {
+                    new PropertyItem("string", "propertyName")
+                }, "return true;");
 
-
-            // Generate Properties
-            var propertyDeclarationExternalSystem = _roslynGenerator.GenerateProperty("String", "ExternalSystem");
-            var propertyDeclarationExternalIdentification = _roslynGenerator.GenerateProperty("String", "ExternalIdentification");
-            var propertyDeclarationDateModified = _roslynGenerator.GenerateProperty("DateTimeOffset", "DateModified");
-
-            // Generate Methods
-            var methodShouldAuditPropertyChangeFor = _roslynGenerator.GeneratePublicOverridableMethod("ShouldAuditPropertyChangeFor", "bool")
-                .AddMethodParameter("string", "propertyName")
-                .AddMethodBody("return true;");
-
-            var methodGetAuditProperties = _roslynGenerator.GeneratePublicOverridableMethod("GetAuditProperties", "IAuditProperties")
-                .AddMethodBody(@"
+            entity = await _roslynGenerator.AppendPublicOverridableMethod(fullFilename, entity, new MethodItem("IAuditProperties", "GetAuditProperties"),
+                new List<PropertyItem>(), @"
                         return new AuditProperties()
                         {
                             AreaId = this.Id,
@@ -85,198 +102,512 @@ namespace Pdbc.Cli.App
                             ObjectId = this.Id,
                             ObjectType = this.GetType().Name,
                             ObjectInfo = $""""
-                        };
-                   ");
-
-            // Add properties/methods to class Declaration
-            classDeclaration = classDeclaration.AddMembers(
-                propertyDeclarationExternalSystem,
-                propertyDeclarationExternalIdentification,
-                propertyDeclarationDateModified,
-                methodShouldAuditPropertyChangeFor,
-                methodGetAuditProperties);
-
-            // Add the class to the namespace.
-            WriteFile(_context.GetDomainPath("Model"), entityName, @namespace, classDeclaration);
+                       };
+                    ");
         }
 
-        private async Task GenerateRepository(string entityName)
+        public async Task GenerateEntityUnitTest()
         {
-            var className = $"{entityName}Repository";
-            var interfaceName = $"I{className}";
+            var className = _generationContext.Parameters.EntitySpecificationName;
 
-            // Get all classes from the project
-            var classes = await _roslynGenerator.GetclassesFromProject(_context.DataProject);
-            var entity = classes.FirstOrDefault(x => x.Identifier.ValueText == className);
+            var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("UnitTests");
+
+            var path = roslynProjectContext.GetPath("Domain","Model");
+            var filename = $"{className}.cs";
+            var fullFilename = Path.Combine(path, filename);
+
+            var entity = await roslynProjectContext.GetClassByName(className);
             if (entity != null)
             {
-                // Entity already exist in the project, no need to generate it
                 return;
             }
 
-            var entityNamespace = _context.GetDataNamespace("Repositories");
+            var entityNamespace = roslynProjectContext.GetNamespace("Domain.Model");
+            var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System", 
+                "Aertssen.Framework.Tests",
+                "Aertssen.Framework.Tests.Extensions",
+                "NUnit.Framework",
+                "Aertssen.Framework.Audit.Core.Model.Base",
+                roslynProjectContext.GetNamespaceForDomainModel()
+            });
 
-            // Generation Code
-            var @namespace = _roslynGenerator.CreateNamespaceDeclaration(entityNamespace)
-                .AddUsingStatements("System", 
-                    "Aertssen.Framework.Audit.Core.Model.Base", 
-                    "Aertssen.Framework.Data.Repositories", 
-                    _context.GetDomainPath("Model"));
+            // generate the class
+            entity = await _roslynGenerator.GenerateTestSpecificationClass(
+                fullFilename,
+                @namespace,
+                className,
+                new[] { $"BaseSpecification" }
+            );
 
-            //  Create a class: (class Order)
-            var interfaceDeclaration = _roslynGenerator.CreateInterfaceDeclaration(interfaceName)
-                                                       .AsPublic()
-                                                       .AddBaseClasses($"IEntityRepository<{entityName}>");            
-
-            //  Create a class: (class Order)
-            var classDeclaration = _roslynGenerator.CreateClassDeclaration(className)
-                                                   .AsPublic()
-                                                   .AddBaseClasses($"EntityFrameworkRepository<{entityName}>", interfaceName);
-
-            WriteFile(_context.GetDataPath("Repositories"), className, @namespace, interfaceDeclaration, classDeclaration);
+            entity = await _roslynGenerator.AppendAssertionFailTestMethod(fullFilename, entity, new MethodItem("void", "Verify_domain_model_action"));
         }
 
-        private async Task GenerateEntityMappingConfiguration(string entityName)
+        private async Task GenerateEntityTestDataBuilder()
         {
-            var className = $"{entityName}Configuration";
+            var className = _generationContext.Parameters.EntityTestDataBuilderName;
+
+            var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("Tests.Helpers");
+
+            var path = roslynProjectContext.GetPath("Domain");
+            var filename = $"{className}.cs";
+            var fullFilename = Path.Combine(path, filename);
+
+            var entity = await roslynProjectContext.GetClassByName(className);
+            if (entity != null)
+            {
+                return;
+            }
+
+            var entityNamespace = roslynProjectContext.GetNamespace("Domain");
+            var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System",
+                "Aertssen.Framework.Core.Builders",
+                "Aertssen.Framework.Core.Extensions",
+                "Aertssen.Framework.Tests",
+                roslynProjectContext.GetNamespaceForDomainModel()
+            });
+
+            // generate the class
+            entity = await _roslynGenerator.GeneratePublicClass(
+                fullFilename,
+                @namespace,
+                className,
+                new[] { $"{_generationContext.Parameters.EntityBuilderName}", $"IExternallyIdentifiableObjectBuilder<{_generationContext.Parameters.EntityBuilderName}>" }
+            );
+        }
+        #endregion
+
+        #region Repositories
+        private async Task GenerateRepositoryInterface()
+        {
+            var className = _generationContext.Parameters.EntityRepositoryInterfaceName;
+
+            var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("Data");
+
+            var path = roslynProjectContext.GetPath("Repositories");
+            var filename = $"{className}.cs";
+            var fullFilename = Path.Combine(path, filename);
+
+            var entity = await roslynProjectContext.GetClassByName(className);
+            if (entity != null)
+            {
+                return;
+            }
+
+            var entityNamespace = roslynProjectContext.GetNamespace("Repositories");
+            var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System",
+                "Aertssen.Framework.Data.Repositories",
+                "Aertssen.Framework.Audit.Core.Model.Base",
+                roslynProjectContext.GetNamespaceForDomainModel()
+            });
+
+            // generate the class
+            entity = await _roslynGenerator.GeneratePublicInterface(
+                fullFilename,
+                @namespace,
+                className,
+                new[] { $"IEntityRepository<{_generationContext.Parameters.EntityName}>" }
+            );
+            
+        }
+
+        private async Task GenerateRepository()
+        {
+            var className = _generationContext.Parameters.EntityRepositoryClassName;
+
+            var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("Data");
+
+            var path = roslynProjectContext.GetPath("Repositories");
+            var filename = $"{className}.cs";
+            var fullFilename = Path.Combine(path, filename);
+
+            var entity = await roslynProjectContext.GetClassByName(className);
+            if (entity != null)
+            {
+                return;
+            }
+
+            var entityNamespace = roslynProjectContext.GetNamespace("Repositories");
+            var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System",
+                "Aertssen.Framework.Data.Repositories",
+                "Aertssen.Framework.Audit.Core.Model.Base",
+                roslynProjectContext.GetNamespaceForDomainModel()
+            });
+
+            // generate the class
+            entity = await _roslynGenerator.GeneratePublicClass(
+                fullFilename,
+                @namespace,
+                className,
+                new[] { $"EntityFrameworkRepository<{_generationContext.Parameters.EntityName}>", _generationContext.Parameters.EntityRepositoryInterfaceName }
+            );
+        }
+
+        public async Task GenerateRepositoryBaseIntegrationTests()
+        {
+            var className = _generationContext.Parameters.EntityRepositorySpecificationName;
+
+            var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("IntegrationTests.Data");
+
+            var path = roslynProjectContext.GetPath("Base");
+            var filename = $"{className}.cs";
+            var fullFilename = Path.Combine(path, filename);
+
+            var entity = await roslynProjectContext.GetClassByName(className);
+            if (entity != null)
+            {
+                return;
+            }
+
+            var entityNamespace = roslynProjectContext.GetNamespace("Base");
+            var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[]
+            {
+                "System",
+                "Aertssen.Framework.Data.Repositories",
+                roslynProjectContext.GetNamespaceForDomainModelHelpers(),
+                roslynProjectContext.GetNamespaceForDomainModel()
+            });
+
+            // generate the class
+            entity = await _roslynGenerator.GeneratePublicClass(
+                fullFilename,
+                @namespace,
+                className,
+                new[] {$"BaseRepositorySpecification<{_generationContext.Parameters.EntityName}>"}
+            );
+
+            entity = await _roslynGenerator.AppendProtectedOverridableMethod(fullFilename, entity,
+                new MethodItem(_generationContext.Parameters.EntityName, "CreateExistingItem"),
+                new List<PropertyItem>(), $"return new {_generationContext.Parameters.EntityName}TestDataBuilder();");
+            entity = await _roslynGenerator.AppendProtectedOverridableMethod(fullFilename, entity,
+                new MethodItem(_generationContext.Parameters.EntityName, "CreateNewItem"),
+                new List<PropertyItem>(), $"return new {_generationContext.Parameters.EntityName}TestDataBuilder();");
+            entity = await _roslynGenerator.AppendProtectedOverridableMethod(fullFilename, entity,
+                new MethodItem("void", "EditItem"),
+                new List<PropertyItem>()
+                {
+                    new PropertyItem(_generationContext.Parameters.EntityName, "item")
+                }, $"throw new NotImplementedException();");
+        }
+
+        public async Task GenerateRepositoryQueriesIntegrationTests()
+        {
+
+
+            var className = _generationContext.Parameters.EntityRepositorySpecificationQueriesName;
+
+            var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("IntegrationTests.Data");
+
+            var path = roslynProjectContext.GetPath("Queries");
+            var filename = $"{className}.cs";
+            var fullFilename = Path.Combine(path, filename);
+
+            var entity = await roslynProjectContext.GetClassByName(className);
+            if (entity != null)
+            {
+                return;
+            }
+
+            var entityNamespace = roslynProjectContext.GetNamespace("Data.Extensions");
+            var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[]
+            {
+                "System",
+                "Aertssen.Framework.Data.Repositories",
+
+                roslynProjectContext.GetNamespaceForDataRepositories(),
+                roslynProjectContext.GetNamespaceForIntegationTestDataExtensions(),
+                roslynProjectContext.GetNamespaceForDomainModelHelpers(),
+                roslynProjectContext.GetNamespaceForDomainModel()
+            });
+
+            // generate the class
+            entity = await _roslynGenerator.GeneratePublicClass(
+                fullFilename,
+                @namespace,
+                className,
+                new[] { $"BaseRepositoryExtensionsSpecification<{_generationContext.Parameters.EntityRepositoryInterfaceName}>" }
+            );
+
            
-            // Get all classes from the project
-            var classes = await _roslynGenerator.GetclassesFromProject(_context.DataProject);
-            var entity = classes.FirstOrDefault(x => x.Identifier.ValueText == className);
+            //var entityNamespace = _context.GetIntegrationTestsDataNamespace("Data.Extensions");
+
+            //// Generation Code
+            //var @namespace = _roslynGenerator.CreateNamespaceDeclaration(entityNamespace)
+            //    .AddUsingStatements("System",
+            //        _context.GetTestsNamespace("Helpers.Domain"),
+            //        _context.GetDomainNamespace("Model"));
+
+            ////  Create a class
+            //var classDeclaration = _roslynGenerator.CreateClassDeclaration(className)
+            //    .AsPublic()
+            //    .AddBaseClasses($"BaseRepositoryExtensionsSpecification<{repositoryInterface}>");
+
+
+            //// Add the class to the namespace.
+            //WriteFile(_context.GetIntegrationTestsDataPath("Repositories", "Queries"), className, @namespace, classDeclaration);
+        }
+        #endregion
+
+        #region Entity Framework Configuration
+        private async Task GenerateEntityMappingConfiguration()
+        {
+            var className = _generationContext.Parameters.EntityConfigurationName;
+
+            var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("Data");
+
+            var path = roslynProjectContext.GetPath("Configurations");
+            var filename = $"{className}.cs";
+            var fullFilename = Path.Combine(path, filename);
+
+            var entity = await roslynProjectContext.GetClassByName(className);
             if (entity != null)
             {
-                // Entity already exist in the project, no need to generate it
                 return;
             }
 
-            var entityNamespace = _context.GetDataNamespace("Configurations");
+            var entityNamespace = roslynProjectContext.GetNamespace("Configurations");
+            var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System",
+                "Aertssen.Framework.Data.Configurations",
+                "Microsoft.EntityFrameworkCore",
+                "Microsoft.EntityFrameworkCore.Metadata.Builders",
+                roslynProjectContext.GetNamespaceForDomainModel()
+            });
 
-            // Generation Code
-            var @namespace = _roslynGenerator.CreateNamespaceDeclaration(entityNamespace)
-                .AddUsingStatements("System",
-                    "Microsoft.EntityFrameworkCore.Metadata.Builders",
-                    "Aertssen.Framework.Data.Configurations",
-                    _context.GetDomainNamespace("Model"));
-
-            //  Create a class
-            var classDeclaration = _roslynGenerator.CreateClassDeclaration(className)
-                .AsPublic()
-                .AddBaseClasses($"AuditableIdentifiableMapping<{entityName}>");
+            // generate the class
+            entity = await _roslynGenerator.GeneratePublicClass(
+                fullFilename,
+                @namespace,
+                className,
+                new[] { $"AuditableIdentifiableMapping<{_generationContext.Parameters.EntityName}>"}
+            );
 
 
-            var methodGetAuditProperties = _roslynGenerator.GeneratePublicOverridableMethod("Configure", "void")
-                .AddMethodParameter("builder", $"EntityTypeBuilder <{entityName}>")
-                .AddMethodBody("base.Configure(builder);");
-
-            WriteFile(_context.GetDataPath("Configurations"), className, @namespace, classDeclaration);
+            string bodyStatementToTable = $"builder.ToTable(\"{_generationContext.Parameters.PluralEntityName}\");";
+            entity = await _roslynGenerator.AppendPublicOverridableMethod(fullFilename, entity, new MethodItem("void", "Configure"),
+                new List<PropertyItem>()
+                {
+                    new PropertyItem($"EntityTypeBuilder <{_generationContext.Parameters.EntityName}>", "builder")
+                }, "base.Configure(builder);",
+                bodyStatementToTable);
             
+
         }
 
-        public async Task GenerateEntityUnitTest(string entityName)
+        private async Task AppendDatabaseCollectionToDbContext()
         {
-            var className = $"{entityName}Specification";
-            // Get all classes from the project
-            var classes = await _roslynGenerator.GetclassesFromProject(_context.UnitTestProject);
-            var entity = classes.FirstOrDefault(x => x.Identifier.ValueText == className);
-            if (entity != null)
+            
+            var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("Data");
+
+            //var path = roslynProjectContext.GetPath("Configurations");
+            //var filename = $"{className}.cs";
+            //var fullFilename = Path.Combine(path, filename);
+
+            var entity = await roslynProjectContext.GetClassEndingWithName("DbContext");
+            if (entity == null)
             {
-                // Entity already exist in the project, no need to generate it
-                return;
+                throw new InvalidOperationException("Cannot append collection to non-existing (DbContext) class");
             }
 
-            var entityNamespace = _context.GetUnitTestNamespace("Domain.Model");
+            var fullFilename = entity.SyntaxTree.FilePath;
 
-            // Generation Code
-            var @namespace = _roslynGenerator.CreateNamespaceDeclaration(entityNamespace)
-                .AddUsingStatements("System", 
-                    "Aertssen.Framework.Tests", 
-                    "Aertssen.Framework.Tests.Extensions",
-                    "NUnit.Framework",
-                    _context.GetDomainNamespace("Model"));
+            // TODO Add possibility to add method on specific order in the class !!
+            entity = await _roslynGenerator.AppendProperty(fullFilename, entity, new PropertyItem($"DbSet<{_generationContext.Parameters.EntityName}>", _generationContext.Parameters.PluralEntityName));
 
-            //  Create a class
-            var classDeclaration = _roslynGenerator.CreateClassDeclaration(className)
-                .AsPublic()
-                .AddBaseClasses("BaseSpecification")
-                .AddAttribute("TestFixture");
+            //// Get all classes from the project
+            ////var classes = await _roslynGenerator.GetclassesFromProject(_context.DataProject) var className = _generationContext.Parameters.EntityConfigurationName;
 
-            
-            // Generate Methods
-            var unitTestMethod = _roslynGenerator.GeneratePublicMethod("Verify_domain_model_action", "void")
-                .AddMethodBody(@"Assert.Fail();")
-                .AddAttribute("Test");
+            ////var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("Data");
 
-            
-            // Add properties/methods to class Declaration
-            classDeclaration = classDeclaration.AddMembers(
-                unitTestMethod);
+            ////var path = roslynProjectContext.GetPath("Configurations");
+            ////var filename = $"{className}.cs";
+            ////var fullFilename = Path.Combine(path, filename);
+            ////ClassDeclarationSyntax databaseContext = classes.FirstOrDefault(x => x.Identifier.ValueText.EndsWith("DbContext"));
+            ////if (databaseContext == null)
+            ////{
+            ////    throw new InvalidOperationException("Cannot append collection to non-existing (DbContext) class");
+            ////}
 
-            // Add the class to the namespace.
-            WriteFile(_context.GetUnitTestPath("Domain","Model"), className, @namespace, classDeclaration);
+            //var propertyName = $"{entityName}Items";
+
+            ////databaseContext = databaseContext.AddMembers(propertyDeclarationDbSet);
+            ////databaseContext.
+
+            //var index = 0;
+            //var counter = 0;
+            //foreach (var m in databaseContext.Members)
+            //{
+            //    counter++;
+            //    var property = m as PropertyDeclarationSyntax;
+            //    if (property != null)
+            //    {
+            //        var typeSyntax = property.Type.ToFullString();
+            //        if (property.Identifier.ValueText == propertyName)
+            //            return;
+
+            //        if (typeSyntax.Contains("DbSet"))
+            //        {
+            //            index = counter;
+            //        }
+            //    }
+            //}
+
+
+            //var propertyDeclarationDbSet = _roslynGenerator.GenerateProperty($"DbSet<{entityName}>", propertyName);
+
+            //var updatedDatabaseContext = databaseContext.WithMembers(databaseContext.Members.Insert(index, propertyDeclarationDbSet));
+            ////var updatedDatabaseContext = databaseContext.AddMembers(propertyDeclarationDbSet);
+
+            //var root = databaseContext.SyntaxTree.GetRoot();
+            //var filePath = databaseContext.SyntaxTree.FilePath;
+
+            //var updatedRoot = root.ReplaceNode(databaseContext, updatedDatabaseContext).NormalizeWhitespace();
+            //File.WriteAllText(filePath, updatedRoot.ToFullString());
+
+
         }
+        #endregion
 
-        public async Task GenerateRepositoryBaseIntegrationTests(string entityName)
+        public async Task SetupEntityAction(String entityName, String action)
         {
-            var className = $"{entityName}RepositorySpecification";
-            // Get all classes from the project
-            var classes = await _roslynGenerator.GetclassesFromProject(_context.IntegrationDataProject);
-            var entity = classes.FirstOrDefault(x => x.Identifier.ValueText == className);
-            if (entity != null)
-            {
-                // Entity already exist in the project, no need to generate it
-                return;
-            }
+            //await SetupEntity(entityName);
 
-            var entityNamespace = _context.GetIntegrationTestsDataNamespace("Repositories");
+            // add method to controller
+            // add method to IServiceContract
+            // add method to implementation WebApiServiceContract
+            // add method to implementation CqrsServiceContract
 
-            // Generation Code
-            var @namespace = _roslynGenerator.CreateNamespaceDeclaration(entityNamespace)
-                .AddUsingStatements("System",
-                    "Aertssen.Framework.Tests",
-                    "Aertssen.Framework.Tests.Extensions",
-                    "NUnit.Framework",
-                    _context.GetDomainNamespace("Model"));
-
-            //  Create a class
-            var classDeclaration = _roslynGenerator.CreateClassDeclaration(className)
-                .AsPublic()
-                .AddBaseClasses("BaseSpecification")
-                .AddAttribute("TestFixture");
+            // add command/query in cqrs
+            // add command/query handler
+            // add command/query handler unittests
+            // add command/query validator
+            // add command/query unittests
 
 
-            // Generate Methods
-            var unitTestMethod = _roslynGenerator.GeneratePublicMethod("Verify_domain_model_action", "void")
-                .AddMethodBody(@"Assert.Fail();")
-                .AddAttribute("Test");
+            //await SetupEntityActionDto(entityName, action, "Command");
 
+            //await SetupCommandQueryClass(entityName, action, "Command");
 
-            // Add properties/methods to class Declaration
-            classDeclaration = classDeclaration.AddMembers(
-                unitTestMethod);
-
-            // Add the class to the namespace.
-            WriteFile(_context.GetUnitTestPath("Domain", "Model"), className, @namespace, classDeclaration);
         }
 
 
-        private void WriteFile(string path, String entityName, NamespaceDeclarationSyntax @namespace, params MemberDeclarationSyntax[] members)
-        {
-            //@namespace = @namespace.AddMembers(members);
 
-            var code = GenerateCodenerateCode(@namespace, members);
-            _fileHelperService.WriteFile(path, entityName, code);
-        }
 
-        private static string GenerateCodenerateCode(NamespaceDeclarationSyntax @namespace, params MemberDeclarationSyntax[] members)
-        {
-            @namespace = @namespace.AddMembers(members);
 
-            // Normalize and get code as string.
-            var code = @namespace
-                .NormalizeWhitespace()
-                .ToFullString();
-            return code;
-        }
-        
+        //private async Task SetupEntityActionDto(string entityName, string action, string classType)
+        //{
+
+        //    //var className = $"{action}{entityName}Dto";
+        //    //var interfaceClassName = $"I{className}";
+
+        //    //// Get all classes from the project
+        //    //var classes = await _roslynGenerator.GetclassesFromProject(_context.DtoProject);
+        //    //var entity = classes.FirstOrDefault(x => x.Identifier.ValueText == className);
+        //    //if (entity != null)
+        //    //{
+        //    //    // Entity already exist in the project, no need to generate it
+        //    //    return;
+        //    //}
+
+        //    //var entityNamespace = _context.GetCoreNamespace($"{entityName}.{action}");
+
+        //    //// Generation Code
+        //    //var @namespace = _roslynGenerator.CreateNamespaceDeclaration(entityNamespace)
+        //    //    .AddUsingStatements("System", "Aertssen.Framework.Infra.CQRS.Base", _context.GetDtoNamespace(entityName));
+
+        //    ////  Create a class
+        //    //var classDeclaration = _roslynGenerator.CreateClassDeclaration(className)
+        //    //    .AsPublic()
+        //    //    .AddBaseClasses($"ICommand<{dtoResultClassName}>");
+
+
+        //    //// Generate Properties
+        //    //var propertyDeclarationExternalSystem = _roslynGenerator.GenerateProperty(dtoInterfaceClassName, entityName);
+
+        //    //// Add properties/methods to class Declaration
+        //    //classDeclaration = classDeclaration.AddMembers(
+        //    //    propertyDeclarationExternalSystem);
+
+        //    //// Add the class to the namespace.
+        //    //WriteFile(_context.GetCorePath("CQRS", entityName, action), className, @namespace, classDeclaration);
+        //}
+
+
+        //private async Task SetupCommandQueryClass(string entityName, string action, string classType)
+        //{
+        //    var className = $"{action}{entityName}{classType}"; // Command vs Query
+        //    var dtoResultClassName = $"{action}{entityName}Result";   // ViewModel vs Result
+        //    var dtoInterfaceClassName = $"I{action}{entityName}Dto";   
+
+        //    // Get all classes from the project
+        //    var classes = await _roslynGenerator.GetclassesFromProject(_context.CoreProject);
+        //    var entity = classes.FirstOrDefault(x => x.Identifier.ValueText == className);
+        //    if (entity != null)
+        //    {
+        //        // Entity already exist in the project, no need to generate it
+        //        return;
+        //    }
+
+        //    var entityNamespace = _context.GetCoreNamespace($"{entityName}.{action}");
+
+        //    // Generation Code
+        //    var @namespace = _roslynGenerator.CreateNamespaceDeclaration(entityNamespace)
+        //        .AddUsingStatements("System", "Aertssen.Framework.Infra.CQRS.Base", _context.GetDtoNamespace(entityName));
+
+        //    //  Create a class
+        //    var classDeclaration = _roslynGenerator.CreateClassDeclaration(className)
+        //        .AsPublic()
+        //        .AddBaseClasses($"ICommand<{dtoResultClassName}>");
+
+
+        //    // Generate Properties
+        //    var propertyDeclarationExternalSystem = _roslynGenerator.GenerateProperty(dtoInterfaceClassName, entityName);
+
+        //    // Add properties/methods to class Declaration
+        //    classDeclaration = classDeclaration.AddMembers(
+        //        propertyDeclarationExternalSystem);
+
+        //    // Add the class to the namespace.
+        //    WriteFile(_context.GetCorePath("CQRS", entityName,action), className, @namespace, classDeclaration);
+        //}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        ////private async Task<Document> AddProperty(Document document, ClassDeclarationSyntax classeDecl, CancellationToken cancellationToken)
+        ////{
+        ////    var root = await document.GetSyntaxRootAsync(cancellationToken);
+        ////    var newClass = classeDecl.AddMembers(MakeProperty());
+        ////    return document.WithSyntaxRoot(root.ReplaceNode(classeDecl, newClass));
+        ////}
+
+        //private void WriteFile(string path, String entityName, NamespaceDeclarationSyntax @namespace, params MemberDeclarationSyntax[] members)
+        //{
+        //    //@namespace = @namespace.AddMembers(members);
+
+        //    var code = GenerateCodenerateCode(@namespace, members);
+        //    _fileHelperService.WriteFile(path, entityName, code);
+        //}
+
+        //private static string GenerateCodenerateCode(NamespaceDeclarationSyntax @namespace, params MemberDeclarationSyntax[] members)
+        //{
+        //    @namespace = @namespace.AddMembers(members);
+
+        //    // Normalize and get code as string.
+        //    var code = @namespace
+        //        .NormalizeWhitespace()
+        //        .ToFullString();
+        //    return code;
+        //}
+
     }
 }

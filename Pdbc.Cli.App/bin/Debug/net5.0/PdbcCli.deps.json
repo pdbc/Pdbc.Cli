@@ -8,12 +8,21 @@
     ".NETCoreApp,Version=v5.0": {
       "PdbcCli/1.0.0": {
         "dependencies": {
+          "CommandLineParser": "2.8.0",
           "Microsoft.Build.Locator": "1.4.1",
           "Microsoft.CodeAnalysis.CSharp.Workspaces": "4.1.0",
           "Microsoft.CodeAnalysis.Workspaces.MSBuild": "4.1.0"
         },
         "runtime": {
           "PdbcCli.dll": {}
+        }
+      },
+      "CommandLineParser/2.8.0": {
+        "runtime": {
+          "lib/netstandard2.0/CommandLine.dll": {
+            "assemblyVersion": "2.8.0.0",
+            "fileVersion": "2.8.0.0"
+          }
         }
       },
       "Humanizer.Core/2.2.0": {
@@ -1131,6 +1140,13 @@
       "type": "project",
       "serviceable": false,
       "sha512": ""
+    },
+    "CommandLineParser/2.8.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-eco2HlKQBY4Joz9odHigzGpVzv6pjsXnY5lziioMveQxr+i2Z7xYcIOMeZTgYiqnMtMAbXMXsVhrNfWO5vJS8Q==",
+      "path": "commandlineparser/2.8.0",
+      "hashPath": "commandlineparser.2.8.0.nupkg.sha512"
     },
     "Humanizer.Core/2.2.0": {
       "type": "package",
