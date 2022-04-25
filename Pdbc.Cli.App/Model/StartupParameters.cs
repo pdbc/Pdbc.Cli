@@ -39,8 +39,71 @@ namespace Pdbc.Cli.App.Model
             Console.WriteLine("Startup Parameters");
             Console.WriteLine($"EntityName: {EntityName}");
             Console.WriteLine($"PluralEntityName: {PluralEntityName}");
+
             Console.WriteLine($"Action: {Action}");
+            Console.WriteLine($"ActionName: {ActionName}");
+            Console.WriteLine($"FullActionName: {FullActionName}");
         }
+
+        public string ActionName
+        {
+            get
+            {
+                if (Action is "Store" or "Create" or "Update" or "List" or "Get")
+                {
+                    return Action;
+                }
+
+                return Action;
+            }
+        }
+
+        public string FullActionName
+        {
+            get
+            {
+                return $"{ActionName}{EntityName}";
+            }
+        }
+
+        public Boolean ShouldGenerateCqrs()
+        {
+            return ActionName != null;
+        }
+
+        public String CqrsInputType
+        {
+            get
+            {
+                if (ActionName == "Get" ||
+                    ActionName == "List")
+                {
+                    return "Query";
+                }
+
+                return "Command";
+            }
+        }
+
+        public string CqrsInputClassName => $"{ActionName}{EntityName}{CqrsInputType}";
+        public string CqrsOutputClassName => $"{ActionName}{EntityName}{CqrsOutputType}";
+
+        public String CqrsOutputType
+        {
+            get
+            {
+                if (ActionName == "Get" ||
+                    ActionName == "List")
+                {
+                    return "ViewModel";
+                }
+
+                return "Result";
+            }
+        }
+        public string ActionEntityDtoName => $"{EntityName}{ActionName}Dto";
+        public string ActionEntityInterfaceDtoName => $"I{ActionEntityDtoName}";
+
 
 
         public string EntityConfigurationName=> $"{EntityName}Configuration";

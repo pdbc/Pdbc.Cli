@@ -50,6 +50,41 @@ namespace Pdbc.Cli.App
 
             await GenerateEntityMappingConfiguration();
             await AppendDatabaseCollectionToDbContext();
+
+            if (_generationContext.Parameters.ShouldGenerateCqrs())
+            {
+                await GenerateEntityActionInterfaceDto();
+                await GenerateEntityActionClassDto();
+
+                await GenerateCqrsInputClass();
+                //await GenerateCqrsOutputClass();
+
+            }
+        }
+
+        public async Task SetupEntityAction()
+        {
+            await SetupEntity();
+
+            // add method to controller
+            // add method to IServiceContract
+            // add method to implementation WebApiServiceContract
+            // add method to implementation CqrsServiceContract
+
+            // add dto 
+            //await SetupEntityActionDto(entityName, action, "Command");
+
+            // add command/query in cqrs
+            // add command/query handler
+            // add command/query handler unittests
+            // add command/query validator
+            // add command/query unittests
+
+
+
+
+            //await SetupCommandQueryClass(entityName, action, "Command");
+
         }
 
         #region Domain Class + UnitTest skeleton
@@ -466,28 +501,95 @@ namespace Pdbc.Cli.App
         }
         #endregion
 
-        public async Task SetupEntityAction(String entityName, String action)
+        #region Dto 
+        public async Task GenerateEntityActionInterfaceDto()
         {
-            //await SetupEntity(entityName);
+            var className = _generationContext.Parameters.ActionEntityInterfaceDtoName;
 
-            // add method to controller
-            // add method to IServiceContract
-            // add method to implementation WebApiServiceContract
-            // add method to implementation CqrsServiceContract
+            var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("Dto");
 
-            // add command/query in cqrs
-            // add command/query handler
-            // add command/query handler unittests
-            // add command/query validator
-            // add command/query unittests
+            var path = roslynProjectContext.GetPath(_generationContext.Parameters.PluralEntityName);
+            var filename = $"{className}.cs";
+            var fullFilename = Path.Combine(path, filename);
 
+            // Generate the entity
 
-            //await SetupEntityActionDto(entityName, action, "Command");
+            var entity = await roslynProjectContext.GetClassByName(className);
+            if (entity == null)
+            {
+                var entityNamespace = roslynProjectContext.GetNamespace(_generationContext.Parameters.PluralEntityName);
+                var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System"});
 
-            //await SetupCommandQueryClass(entityName, action, "Command");
+                // generate the class
+                entity = await _roslynGenerator.GeneratePublicInterface(
+                    fullFilename,
+                    @namespace,
+                    className,
 
+                    new[] { "IInterfacingDto" }
+                );
+
+            }
         }
+        public async Task GenerateEntityActionClassDto()
+        {
+            var className = _generationContext.Parameters.ActionEntityDtoName;
 
+            var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("Dto");
+
+            var path = roslynProjectContext.GetPath(_generationContext.Parameters.PluralEntityName);
+            var filename = $"{className}.cs";
+            var fullFilename = Path.Combine(path, filename);
+
+            // Generate the entity
+
+            var entity = await roslynProjectContext.GetClassByName(className);
+            if (entity == null)
+            {
+                var entityNamespace = roslynProjectContext.GetNamespace(_generationContext.Parameters.PluralEntityName);
+                var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System" });
+
+                // generate the class
+                entity = await _roslynGenerator.GeneratePublicClass(
+                    fullFilename,
+                    @namespace,
+                    className,
+                    new[] { $"{ _generationContext.Parameters.ActionEntityInterfaceDtoName}" }
+                );
+
+            }
+        }
+        #endregion
+
+        #region Cqrs 
+        public async Task GenerateCqrsInputClass()
+        {
+            var className = _generationContext.Parameters.CqrsInputClassName;
+
+            var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("Core");
+
+            var path = roslynProjectContext.GetPath("CQRS", _generationContext.Parameters.PluralEntityName, _generationContext.Parameters.ActionName);
+            var filename = $"{className}.cs";
+            var fullFilename = Path.Combine(path, filename);
+
+            // Generate the entity
+
+            var entity = await roslynProjectContext.GetClassByName(className);
+            if (entity == null)
+            {
+                var entityNamespace = roslynProjectContext.GetNamespace($"CQRS.{_generationContext.Parameters.PluralEntityName}.{_generationContext.Parameters.ActionName}");
+                var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System" });
+
+                // generate the class
+                entity = await _roslynGenerator.GeneratePublicClass(
+                    fullFilename,
+                    @namespace,
+                    className,
+                    new[] { $"{_generationContext.Parameters.CqrsInputType}<{ _generationContext.Parameters.CqrsOutputClassName}>" }
+                );
+            }
+        }
+        #endregion
 
 
 
