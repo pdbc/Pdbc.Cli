@@ -48,9 +48,9 @@ namespace Pdbc.Cli.App
             }
 
             // TODO Fix path
-            generationContext.BasePath = "C:\\repos\\Development\\IM.Scharnier\\";
-            cliConfiguration.ApplicationName = "Scharnier";
-            cliConfiguration.RootNamespace = "IM.Scharnier";
+            generationContext.BasePath = @"C:\repos\Pdbc\demo\v1";
+            cliConfiguration.ApplicationName = "Locations";
+            cliConfiguration.RootNamespace = "Locations";
 
             // Find the solution (what if we have multiple solutions ??)
             var solutionPath = fileHelperService.GetSolutionPathFrom(generationContext.BasePath);
@@ -58,35 +58,10 @@ namespace Pdbc.Cli.App
 
             var roslySolutionContext = new RoslynSolutionContext(generationContext, solutionPath);
             Console.WriteLine($"Parsed the solution {solutionPath} to setup the workspace");
-            //roslySolutionContext.InitializeProjects();
-
+            
             //var context = new RoslynGenerationContext();
             var codeGenerationService = new CodeGenerationService(roslySolutionContext, generationContext);
                 codeGenerationService.SetupEntity().GetAwaiter().GetResult();
-
-
-            //await context.Initialize("rootNamespace", "basePath", fileHelperService.GetSolutionPathFrom("basePath"));
-            //await context.Initialize(rootNamespace, basePath, fileHelperService.GetSolutionPathFrom(basePath));
-
-
-            //await codeGenerationService.SetupEntity(generationContext);
-
-            // configuration
-            //var basePath= @"C:\repos\Development\IM.Scharnier\";
-            //var rootNamespace = "IM.Scharnier";
-
-
-            //var basePath = @"C:\repos\Development\IM.FuelMgmt\";
-            //var rootNamespace = "IM.FuelMgmt";
-
-
-            // setup context
-
-            // generation
-
-            //await codeGenerationService.SetupEntityAction(entityName, "Store");
-
-
         }
     }
 

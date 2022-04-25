@@ -104,15 +104,19 @@ namespace Pdbc.Cli.App
             if (entity == null)
             {
                 var entityNamespace = roslynProjectContext.GetNamespace("Model");
-                var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System", "Aertssen.Framework.Audit.Core.Model.Base" });
+                var usingStatements = new[] {"System", "Aertssen.Framework.Audit.Core.Model.Base"};
+                var baseClasses = new[] {$"BaseEquatableAuditableEntity<{className}>", "IInterfacingEntity"};
+
+
+                //var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System", "Aertssen.Framework.Audit.Core.Model.Base" });
 
                 // generate the class
                 entity = await _roslynGenerator.GeneratePublicClass(
                     fullFilename,
-                    @namespace,
+                    entityNamespace,
                     className,
-                    
-                    new[] { $"BaseEquatableAuditableEntity<{className}>", "IInterfacingEntity" }
+                    usingStatements,
+                    baseClasses
                 );
                 
             }
@@ -147,7 +151,7 @@ namespace Pdbc.Cli.App
 
             var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("UnitTests");
 
-            var path = roslynProjectContext.GetPath("Domain","Model");
+            var path = roslynProjectContext.GetTestsPath("Domain","Model");
             var filename = $"{className}.cs";
             var fullFilename = Path.Combine(path, filename);
 
@@ -157,22 +161,37 @@ namespace Pdbc.Cli.App
                 return;
             }
 
+
             var entityNamespace = roslynProjectContext.GetNamespace("Domain.Model");
-            var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System", 
-                "Aertssen.Framework.Tests",
+            var usingStatements = new[] { "System","Aertssen.Framework.Tests",
                 "Aertssen.Framework.Tests.Extensions",
                 "NUnit.Framework",
                 "Aertssen.Framework.Audit.Core.Model.Base",
-                roslynProjectContext.GetNamespaceForDomainModel()
-            });
+                roslynProjectContext.GetNamespaceForDomainModel() };
+            var baseClasses = new[] { $"BaseSpecification" };
 
-            // generate the class
             entity = await _roslynGenerator.GenerateTestSpecificationClass(
                 fullFilename,
-                @namespace,
+                entityNamespace,
                 className,
-                new[] { $"BaseSpecification" }
+                usingStatements,
+                baseClasses
             );
+            //var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System", 
+            //    "Aertssen.Framework.Tests",
+            //    "Aertssen.Framework.Tests.Extensions",
+            //    "NUnit.Framework",
+            //    "Aertssen.Framework.Audit.Core.Model.Base",
+            //    roslynProjectContext.GetNamespaceForDomainModel()
+            //});
+
+            //// generate the class
+            //entity = await _roslynGenerator.GenerateTestSpecificationClass(
+            //    fullFilename,
+            //    @namespace,
+            //    className,
+            //    new[] { $"BaseSpecification" }
+            //);
 
             entity = await _roslynGenerator.AppendAssertionFailTestMethod(fullFilename, entity, new MethodItem("void", "Verify_domain_model_action"));
         }
@@ -183,7 +202,7 @@ namespace Pdbc.Cli.App
 
             var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("Tests.Helpers");
 
-            var path = roslynProjectContext.GetPath("Domain");
+            var path = roslynProjectContext.GetTestsPath("Domain");
             var filename = $"{className}.cs";
             var fullFilename = Path.Combine(path, filename);
 
@@ -194,20 +213,39 @@ namespace Pdbc.Cli.App
             }
 
             var entityNamespace = roslynProjectContext.GetNamespace("Domain");
-            var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System",
+            var usingStatements = new[]
+            {
+                "System","Aertssen.Framework.Tests",
                 "Aertssen.Framework.Core.Builders",
                 "Aertssen.Framework.Core.Extensions",
                 "Aertssen.Framework.Tests",
                 roslynProjectContext.GetNamespaceForDomainModel()
-            });
+            };
+            var baseClasses = new[] { $"{_generationContext.Parameters.EntityBuilderName}", $"IExternallyIdentifiableObjectBuilder<{_generationContext.Parameters.EntityBuilderName}>" };
 
             // generate the class
             entity = await _roslynGenerator.GeneratePublicClass(
                 fullFilename,
-                @namespace,
+                entityNamespace,
                 className,
-                new[] { $"{_generationContext.Parameters.EntityBuilderName}", $"IExternallyIdentifiableObjectBuilder<{_generationContext.Parameters.EntityBuilderName}>" }
+                usingStatements,
+                baseClasses
             );
+
+            //var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System",
+            //    "Aertssen.Framework.Core.Builders",
+            //    "Aertssen.Framework.Core.Extensions",
+            //    "Aertssen.Framework.Tests",
+            //    roslynProjectContext.GetNamespaceForDomainModel()
+            //});
+
+            //// generate the class
+            //entity = await _roslynGenerator.GeneratePublicClass(
+            //    fullFilename,
+            //    @namespace,
+            //    className,
+            //    new[] { $"{_generationContext.Parameters.EntityBuilderName}", $"IExternallyIdentifiableObjectBuilder<{_generationContext.Parameters.EntityBuilderName}>" }
+            //);
         }
         #endregion
 
@@ -229,20 +267,33 @@ namespace Pdbc.Cli.App
             }
 
             var entityNamespace = roslynProjectContext.GetNamespace("Repositories");
-            var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System",
-                "Aertssen.Framework.Data.Repositories",
+            
+            var usingStatements = new[] { "System","Aertssen.Framework.Data.Repositories",
                 "Aertssen.Framework.Audit.Core.Model.Base",
                 roslynProjectContext.GetNamespaceForDomainModel()
-            });
 
-            // generate the class
+            };
+            var baseClasses = new[]
+            {
+                $"IEntityRepository<{_generationContext.Parameters.EntityName}>"
+            };
             entity = await _roslynGenerator.GeneratePublicInterface(
                 fullFilename,
-                @namespace,
+                entityNamespace,
                 className,
-                new[] { $"IEntityRepository<{_generationContext.Parameters.EntityName}>" }
+                usingStatements,
+                baseClasses
             );
-            
+
+            //var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System",
+            //    "Aertssen.Framework.Data.Repositories",
+            //    "Aertssen.Framework.Audit.Core.Model.Base",
+            //    roslynProjectContext.GetNamespaceForDomainModel()
+            //});
+
+            // generate the class
+
+
         }
 
         private async Task GenerateRepository()
@@ -262,19 +313,41 @@ namespace Pdbc.Cli.App
             }
 
             var entityNamespace = roslynProjectContext.GetNamespace("Repositories");
-            var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System",
+
+
+            var usingStatements = new[] {
                 "Aertssen.Framework.Data.Repositories",
                 "Aertssen.Framework.Audit.Core.Model.Base",
                 roslynProjectContext.GetNamespaceForDomainModel()
-            });
 
-            // generate the class
+            };
+            var baseClasses = new[]
+            {
+                $"EntityFrameworkRepository<{_generationContext.Parameters.EntityName}>", 
+                _generationContext.Parameters.EntityRepositoryInterfaceName
+            };
             entity = await _roslynGenerator.GeneratePublicClass(
                 fullFilename,
-                @namespace,
+                entityNamespace,
                 className,
-                new[] { $"EntityFrameworkRepository<{_generationContext.Parameters.EntityName}>", _generationContext.Parameters.EntityRepositoryInterfaceName }
+                usingStatements,
+                baseClasses
             );
+
+
+            //var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System",
+            //    "Aertssen.Framework.Data.Repositories",
+            //    "Aertssen.Framework.Audit.Core.Model.Base",
+            //    roslynProjectContext.GetNamespaceForDomainModel()
+            //});
+
+            //// generate the class
+            //entity = await _roslynGenerator.GeneratePublicClass(
+            //    fullFilename,
+            //    @namespace,
+            //    className,
+            //    new[] { $"EntityFrameworkRepository<{_generationContext.Parameters.EntityName}>", _generationContext.Parameters.EntityRepositoryInterfaceName }
+            //);
         }
 
         public async Task GenerateRepositoryBaseIntegrationTests()
@@ -283,7 +356,7 @@ namespace Pdbc.Cli.App
 
             var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("IntegrationTests.Data");
 
-            var path = roslynProjectContext.GetPath("Base");
+            var path = roslynProjectContext.GetTestsPath("Base");
             var filename = $"{className}.cs";
             var fullFilename = Path.Combine(path, filename);
 
@@ -293,22 +366,46 @@ namespace Pdbc.Cli.App
                 return;
             }
 
-            var entityNamespace = roslynProjectContext.GetNamespace("Base");
-            var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[]
-            {
+            var entityNamespace = roslynProjectContext.GetNamespace();
+
+            var usingStatements = new[] {
                 "System",
                 "Aertssen.Framework.Data.Repositories",
                 roslynProjectContext.GetNamespaceForDomainModelHelpers(),
                 roslynProjectContext.GetNamespaceForDomainModel()
-            });
 
-            // generate the class
+            };
+            var baseClasses = new[]
+            {
+                $"BaseRepositorySpecification<{_generationContext.Parameters.EntityName}>"
+            };
             entity = await _roslynGenerator.GeneratePublicClass(
                 fullFilename,
-                @namespace,
+                entityNamespace,
                 className,
-                new[] {$"BaseRepositorySpecification<{_generationContext.Parameters.EntityName}>"}
+                usingStatements,
+                baseClasses
             );
+
+
+            //var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[]
+            //{
+            //    "System",
+            //    "Aertssen.Framework.Data.Repositories",
+            //    roslynProjectContext.GetNamespaceForDomainModelHelpers(),
+            //    roslynProjectContext.GetNamespaceForDomainModel()
+            //});
+
+            //// generate the class
+            //entity = await _roslynGenerator.GeneratePublicClass(
+            //    fullFilename,
+            //    @namespace,
+            //    className,
+            //    new[]
+            //    {
+            //        $"BaseRepositorySpecification<{_generationContext.Parameters.EntityName}>"
+            //    }
+            //);
 
             entity = await _roslynGenerator.AppendProtectedOverridableMethod(fullFilename, entity,
                 new MethodItem(_generationContext.Parameters.EntityName, "CreateExistingItem"),
@@ -332,7 +429,7 @@ namespace Pdbc.Cli.App
 
             var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("IntegrationTests.Data");
 
-            var path = roslynProjectContext.GetPath("Queries");
+            var path = roslynProjectContext.GetTestsPath("Extensions");
             var filename = $"{className}.cs";
             var fullFilename = Path.Combine(path, filename);
 
@@ -343,8 +440,7 @@ namespace Pdbc.Cli.App
             }
 
             var entityNamespace = roslynProjectContext.GetNamespace("Data.Extensions");
-            var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[]
-            {
+            var usingStatements = new[] {
                 "System",
                 "Aertssen.Framework.Data.Repositories",
 
@@ -352,15 +448,41 @@ namespace Pdbc.Cli.App
                 roslynProjectContext.GetNamespaceForIntegationTestDataExtensions(),
                 roslynProjectContext.GetNamespaceForDomainModelHelpers(),
                 roslynProjectContext.GetNamespaceForDomainModel()
-            });
 
-            // generate the class
+            };
+            var baseClasses = new[]
+            {
+                $"BaseRepositoryExtensionsSpecification<{_generationContext.Parameters.EntityRepositoryInterfaceName}>"
+            };
             entity = await _roslynGenerator.GeneratePublicClass(
                 fullFilename,
-                @namespace,
+                entityNamespace,
                 className,
-                new[] { $"BaseRepositoryExtensionsSpecification<{_generationContext.Parameters.EntityRepositoryInterfaceName}>" }
+                usingStatements,
+                baseClasses
             );
+
+            //var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[]
+            //{
+            //    "System",
+            //    "Aertssen.Framework.Data.Repositories",
+
+            //    roslynProjectContext.GetNamespaceForDataRepositories(),
+            //    roslynProjectContext.GetNamespaceForIntegationTestDataExtensions(),
+            //    roslynProjectContext.GetNamespaceForDomainModelHelpers(),
+            //    roslynProjectContext.GetNamespaceForDomainModel()
+            //});
+
+            //// generate the class
+            //entity = await _roslynGenerator.GeneratePublicClass(
+            //    fullFilename,
+            //    @namespace,
+            //    className,
+            //    new[]
+            //    {
+            //        $"BaseRepositoryExtensionsSpecification<{_generationContext.Parameters.EntityRepositoryInterfaceName}>"
+            //    }
+            //);
 
            
             //var entityNamespace = _context.GetIntegrationTestsDataNamespace("Data.Extensions");
@@ -400,20 +522,45 @@ namespace Pdbc.Cli.App
             }
 
             var entityNamespace = roslynProjectContext.GetNamespace("Configurations");
-            var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System",
+
+            var usingStatements = new[] {
+                "System",
                 "Aertssen.Framework.Data.Configurations",
                 "Microsoft.EntityFrameworkCore",
                 "Microsoft.EntityFrameworkCore.Metadata.Builders",
                 roslynProjectContext.GetNamespaceForDomainModel()
-            });
 
-            // generate the class
+            };
+            var baseClasses = new[]
+            {
+                $"AuditableIdentifiableMapping<{_generationContext.Parameters.EntityName}>"
+            };
             entity = await _roslynGenerator.GeneratePublicClass(
                 fullFilename,
-                @namespace,
+                entityNamespace,
                 className,
-                new[] { $"AuditableIdentifiableMapping<{_generationContext.Parameters.EntityName}>"}
+                usingStatements,
+                baseClasses
             );
+
+
+            //var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System",
+            //    "Aertssen.Framework.Data.Configurations",
+            //    "Microsoft.EntityFrameworkCore",
+            //    "Microsoft.EntityFrameworkCore.Metadata.Builders",
+            //    roslynProjectContext.GetNamespaceForDomainModel()
+            //});
+
+            //// generate the class
+            //entity = await _roslynGenerator.GeneratePublicClass(
+            //    fullFilename,
+            //    @namespace,
+            //    className,
+            //    new[]
+            //    {
+            //        $"AuditableIdentifiableMapping<{_generationContext.Parameters.EntityName}>"
+            //    }
+            //);
 
 
             string bodyStatementToTable = $"builder.ToTable(\"{_generationContext.Parameters.PluralEntityName}\");";
@@ -518,16 +665,31 @@ namespace Pdbc.Cli.App
             if (entity == null)
             {
                 var entityNamespace = roslynProjectContext.GetNamespace(_generationContext.Parameters.PluralEntityName);
-                var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System"});
-
-                // generate the class
+                var usingStatements = new[] {
+                    "System",
+                };
+                var baseClasses = new[]
+                {
+                    $"IInterfacingDto"
+                };
                 entity = await _roslynGenerator.GeneratePublicInterface(
                     fullFilename,
-                    @namespace,
+                    entityNamespace,
                     className,
-
-                    new[] { "IInterfacingDto" }
+                    usingStatements,
+                    baseClasses
                 );
+
+                //var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System"});
+
+                //// generate the class
+                //entity = await _roslynGenerator.GeneratePublicInterface(
+                //    fullFilename,
+                //    @namespace,
+                //    className,
+
+                //    new[] { "IInterfacingDto" }
+                //);
 
             }
         }
@@ -547,15 +709,32 @@ namespace Pdbc.Cli.App
             if (entity == null)
             {
                 var entityNamespace = roslynProjectContext.GetNamespace(_generationContext.Parameters.PluralEntityName);
-                var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System" });
 
-                // generate the class
+                var usingStatements = new[] {
+                    "System",
+                };
+                var baseClasses = new[]
+                {
+                    $"{ _generationContext.Parameters.ActionEntityInterfaceDtoName}"
+                };
                 entity = await _roslynGenerator.GeneratePublicClass(
                     fullFilename,
-                    @namespace,
+                    entityNamespace,
                     className,
-                    new[] { $"{ _generationContext.Parameters.ActionEntityInterfaceDtoName}" }
+                    usingStatements,
+                    baseClasses
                 );
+
+
+                //var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System" });
+
+                //// generate the class
+                //entity = await _roslynGenerator.GeneratePublicClass(
+                //    fullFilename,
+                //    @namespace,
+                //    className,
+                //    new[] { $"{ _generationContext.Parameters.ActionEntityInterfaceDtoName}" }
+                //);
 
             }
         }
@@ -578,15 +757,33 @@ namespace Pdbc.Cli.App
             if (entity == null)
             {
                 var entityNamespace = roslynProjectContext.GetNamespace($"CQRS.{_generationContext.Parameters.PluralEntityName}.{_generationContext.Parameters.ActionName}");
-                var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System" });
 
-                // generate the class
+                var usingStatements = new[] {
+                    "System",
+                };
+                var baseClasses = new[]
+                {
+                    $"{_generationContext.Parameters.CqrsInputType}<{ _generationContext.Parameters.CqrsOutputClassName}>"
+                };
                 entity = await _roslynGenerator.GeneratePublicClass(
                     fullFilename,
-                    @namespace,
+                    entityNamespace,
                     className,
-                    new[] { $"{_generationContext.Parameters.CqrsInputType}<{ _generationContext.Parameters.CqrsOutputClassName}>" }
+                    usingStatements,
+                    baseClasses
                 );
+
+
+
+                //var @namespace = await _roslynGenerator.GenerateNamespace(entityNamespace, new[] { "System" });
+
+                //// generate the class
+                //entity = await _roslynGenerator.GeneratePublicClass(
+                //    fullFilename,
+                //    @namespace,
+                //    className,
+                //    new[] { $"{_generationContext.Parameters.CqrsInputType}<{ _generationContext.Parameters.CqrsOutputClassName}>" }
+                //);
             }
         }
         #endregion

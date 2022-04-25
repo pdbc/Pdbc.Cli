@@ -1,17 +1,16 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Pdbc.Cli.App.Model;
 
-namespace Pdbc.Cli.App
+namespace Pdbc.Cli.App.Roslyn.Extensions
 {
     public static class RoslynExtensions
     {
         // Move to extension method ??
-        public static NamespaceDeclarationSyntax AddUsingStatements(this NamespaceDeclarationSyntax @namespace, params string[] statements)
+        public static CompilationUnitSyntax AddUsingStatements(this CompilationUnitSyntax @namespace, params string[] statements)
         {
             foreach (var s in statements)
             {

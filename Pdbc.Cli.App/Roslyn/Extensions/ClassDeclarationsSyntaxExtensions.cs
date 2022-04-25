@@ -33,5 +33,11 @@ namespace Pdbc.Cli.App.Roslyn.Extensions
             var members = classDeclarationSyntax.Members.Add(memberDeclarationSyntax);
             return classDeclarationSyntax.WithMembers(members);
         }
+
+        public static ClassDeclarationSyntax GetClassDeclarationSyntaxFrom(this CompilationUnitSyntax compilationUnitSyntax)
+        {
+            var namespaceUnitSyntax = compilationUnitSyntax.Members.OfType<NamespaceDeclarationSyntax>().FirstOrDefault();
+            return namespaceUnitSyntax.Members.OfType<ClassDeclarationSyntax>().FirstOrDefault();
+        }
     }
 }

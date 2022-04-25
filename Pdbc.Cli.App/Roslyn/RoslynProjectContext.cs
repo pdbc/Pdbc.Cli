@@ -64,7 +64,16 @@ namespace Pdbc.Cli.App.Roslyn
             var result = Path.Combine(GenerationContext.BasePath, $"{GenerationContext.Configuration.RootNamespace}.{Name}");
             return AppendSubfolders(result, subfolders);
         }
-
+        public string GetTestsPath(params String[] subfolders)
+        {
+            var result = Path.Combine(GenerationContext.BasePath, "Tests", $"{GenerationContext.Configuration.RootNamespace}.{Name}");
+            return AppendSubfolders(result, subfolders);
+        }
+        public string GetAppsPath(params String[] subfolders)
+        {
+            var result = Path.Combine(GenerationContext.BasePath, "Apps", $"{GenerationContext.Configuration.RootNamespace}.{Name}");
+            return AppendSubfolders(result, subfolders);
+        }
         private String AppendSubfolders(string path, params String[] subfolders)
         {
             EnsureDirectoryExists(path);

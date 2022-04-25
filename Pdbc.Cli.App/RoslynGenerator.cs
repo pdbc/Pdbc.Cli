@@ -22,71 +22,83 @@ namespace Pdbc.Cli.App
             _roslynFactory = new RoslynFactory();
         }
 
-        public async Task<NamespaceDeclarationSyntax> GenerateNamespace(string nameSpaceString, string[] usingStatements)
-        {
-            var @namespace = CreateNamespaceDeclaration(nameSpaceString)
-                .AddUsingStatements(usingStatements);
-
-            return @namespace;
-        }
-        public async Task<ClassDeclarationSyntax> GeneratePublicClass(
-            string fullFilename,
-            NamespaceDeclarationSyntax @namespace,
-            string className,
+        public async Task<ClassDeclarationSyntax> GeneratePublicClass(string fullFilename, 
+            string entityNamespace, 
+            string className, 
+            string[] usingStatements, 
             string[] baseClasses)
         {
+            var compilationUnitSyntax = _roslynFactory.CreateCompilationUnitSyntax(usingStatements);
+           
+            var @namespace = _roslynFactory.CreateNamespaceDeclarationSyntax(entityNamespace);
+
             //  Create a class
             var classDeclaration = _roslynFactory.CreateClassDeclaration(className)
                 .AsPublic()
                 .AddBaseClasses(baseClasses);
 
-
             // Add class to namespace
             @namespace = @namespace.AddMembers(classDeclaration);
 
+            compilationUnitSyntax = compilationUnitSyntax.AddMembers(@namespace);
+
             // Generate the code
-            var code = @namespace
+            var code = compilationUnitSyntax
                 .NormalizeWhitespace()
                 .ToFullString();
 
             // write the file to disk
             await _fileHelperService.WriteFile(fullFilename, code);
 
-            return @namespace.Members.OfType<ClassDeclarationSyntax>().FirstOrDefault();
+            var result = compilationUnitSyntax.GetClassDeclarationSyntaxFrom();
+            return result;
         }
-
+        
         public async Task<ClassDeclarationSyntax> GeneratePublicInterface(
             string fullFilename,
-            NamespaceDeclarationSyntax @namespace,
+            string entityNamespace,
             string className,
+            string[] usingStatements,
             string[] baseClasses)
         {
+            var compilationUnitSyntax = _roslynFactory.CreateCompilationUnitSyntax(usingStatements);
+
+            var @namespace = _roslynFactory.CreateNamespaceDeclarationSyntax(entityNamespace);
+
             //  Create a class
-            var classDeclaration = _roslynFactory.CreateInterfaceDeclaration(className)
+            var interfaceDeclarationSyntax = _roslynFactory.CreateInterfaceDeclaration(className)
                 .AsPublic()
                 .AddBaseClasses(baseClasses);
 
 
             // Add class to namespace
-            @namespace = @namespace.AddMembers(classDeclaration);
+            @namespace = @namespace.AddMembers(interfaceDeclarationSyntax);
+
+            compilationUnitSyntax = compilationUnitSyntax.AddMembers(@namespace);
 
             // Generate the code
-            var code = @namespace
+            var code = compilationUnitSyntax
                 .NormalizeWhitespace()
                 .ToFullString();
 
             // write the file to disk
             await _fileHelperService.WriteFile(fullFilename, code);
-
-            return @namespace.Members.OfType<ClassDeclarationSyntax>().FirstOrDefault();
+            var result = compilationUnitSyntax.GetClassDeclarationSyntaxFrom();
+            return result;
         }
 
         public async Task<ClassDeclarationSyntax> GenerateTestSpecificationClass(
             string fullFilename,
-            NamespaceDeclarationSyntax @namespace,
+            string entityNamespace,
             string className,
+            string[] usingStatements,
             string[] baseClasses)
         {
+            var compilationUnitSyntax = _roslynFactory.CreateCompilationUnitSyntax(usingStatements);
+
+            var @namespace = _roslynFactory.CreateNamespaceDeclarationSyntax(entityNamespace);
+
+
             //  Create a class
             var classDeclaration = _roslynFactory.CreateClassDeclaration(className)
                 .AsPublic()
@@ -97,19 +109,19 @@ namespace Pdbc.Cli.App
             // Add class to namespace
             @namespace = @namespace.AddMembers(classDeclaration);
 
+            compilationUnitSyntax = compilationUnitSyntax.AddMembers(@namespace);
+
             // Generate the code
-            var code = @namespace
+            var code = compilationUnitSyntax
                 .NormalizeWhitespace()
                 .ToFullString();
 
             // write the file to disk
             await _fileHelperService.WriteFile(fullFilename, code);
-
-            return @namespace.Members.OfType<ClassDeclarationSyntax>().FirstOrDefault();
+            var result = compilationUnitSyntax.GetClassDeclarationSyntaxFrom();
+            return result;
         }
-
-
-
+        
 
         public async Task<ClassDeclarationSyntax> AppendProperty(string fullFilename,
             ClassDeclarationSyntax classDeclarationSyntax,
@@ -121,12 +133,8 @@ namespace Pdbc.Cli.App
 
             //var oldCode = classDeclarationSyntax.ToFullString();
             var propertyDeclarationExternalSystem = _roslynFactory.GenerateProperty(property.Type, property.Name);
-            //var updatedClassDeclarationSyntax = classDeclarationSyntax.WithMembers(classDeclarationSyntax.Members.Add(propertyDeclarationExternalSystem));
             var updatedClassDeclarationSyntax = classDeclarationSyntax.AddAndKeep(propertyDeclarationExternalSystem);
-
-            //var root = classDeclarationSyntax.SyntaxTree.GetRoot();
-            //var filePath = classDeclarationSyntax.SyntaxTree.FilePath;
-
+            
             return await SaveClassDeclaration(fullFilename, classDeclarationSyntax, updatedClassDeclarationSyntax);
 
         }
@@ -148,6 +156,7 @@ namespace Pdbc.Cli.App
             return await SaveClassDeclaration(fullFilename, classDeclarationSyntax, updatedClassDeclarationSyntax);
 
         }
+
         public async Task<ClassDeclarationSyntax> AppendPublicOverridableMethod(string fullFilename,
             ClassDeclarationSyntax classDeclarationSyntax,
             MethodItem method, List<PropertyItem> properties,
@@ -202,25 +211,21 @@ namespace Pdbc.Cli.App
             NamespaceDeclarationSyntax @namespace = classDeclarationSyntax.GetParentNodeOfType<NamespaceDeclarationSyntax>();
             if (@namespace != null)
             {
-                //var usingDirectives = @namespace.GetUsingStatementsFromNamespace<UsingDirectiveSyntax>();
-
                 var updatedRoot = @namespace.ReplaceNode(classDeclarationSyntax, updatedClassDeclarationSyntax).NormalizeWhitespace();
 
-                CompilationUnitSyntax @compilationUnitSyntax = @namespace.GetParentNodeOfType<CompilationUnitSyntax>();
+                var @compilationUnitSyntax = @namespace.GetParentNodeOfType<CompilationUnitSyntax>();
                 if (@compilationUnitSyntax == null)
                 {
-
                     throw new InvalidOperationException("Compilation Unit not found.");
                 }
 
                 var updateCompilationSyntax = @compilationUnitSyntax.ReplaceNode(@namespace, updatedRoot);
                 var code = updateCompilationSyntax.NormalizeWhitespace().ToFullString();
-                //var code = @namespace.NormalizeWhitespace().ToFullString();
-
+                
                 await _fileHelperService.WriteFile(fullFilename, code);
-
                 {
-                    return updatedRoot.Members.OfType<ClassDeclarationSyntax>().FirstOrDefault();
+                    var result = updateCompilationSyntax.GetClassDeclarationSyntaxFrom();
+                    return result;
                 }
             }
 
@@ -228,23 +233,6 @@ namespace Pdbc.Cli.App
         }
 
 
-        public NamespaceDeclarationSyntax CreateNamespaceDeclaration(string @namespace)
-        {
-            return SyntaxFactory.NamespaceDeclaration(SyntaxFactory.ParseName(@namespace)).NormalizeWhitespace();
-        }
 
-
-
-        public InterfaceDeclarationSyntax CreateInterfaceDeclaration(string name)
-        {
-            return SyntaxFactory.InterfaceDeclaration(name);
-        }
-
-
-
-        public AttributeSyntax CreateAttribute(string name)
-        {
-            return SyntaxFactory.Attribute(SyntaxFactory.IdentifierName(name));
-        }
     }
 }

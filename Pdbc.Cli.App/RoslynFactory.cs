@@ -1,6 +1,8 @@
 ﻿using System;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Pdbc.Cli.App.Roslyn.Extensions;
 
 namespace Pdbc.Cli.App
 {
@@ -57,6 +59,25 @@ namespace Pdbc.Cli.App
                 ;
 
             return method;
+        }
+
+        public CompilationUnitSyntax CreateCompilationUnitSyntax(string[] usingStatements)
+        {
+            CompilationUnitSyntax compilationUnitSyntax = SyntaxFactory.CompilationUnit()
+                .AddUsingStatements(usingStatements);
+            ;
+            return compilationUnitSyntax;
+        }
+
+        public NamespaceDeclarationSyntax CreateNamespaceDeclarationSyntax(string namespaceName)
+        {
+            return SyntaxFactory.NamespaceDeclaration(SyntaxFactory.ParseName(namespaceName)).NormalizeWhitespace();
+        }
+
+
+        public AttributeSyntax CreateAttribute(string name)
+        {
+            return SyntaxFactory.Attribute(SyntaxFactory.IdentifierName(name));
         }
     }
 }
