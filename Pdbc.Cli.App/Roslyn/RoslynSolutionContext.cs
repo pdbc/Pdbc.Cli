@@ -1,30 +1,29 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
 using Pdbc.Cli.App.Model;
-using Pdbc.Cli.App.Roslyn;
 
-namespace Pdbc.Cli.App
+namespace Pdbc.Cli.App.Roslyn
 {
     public class RoslynSolutionContext
     {
-        private readonly GenerationContext _generationContext;
+        private readonly GenerationConfiguration _configuration;
         public MSBuildWorkspace Workspace { get; set; }
 
         public Solution Solution { get; set; }
-        
-        public RoslynSolutionContext(GenerationContext generationContext, 
-            String SolutionPath)
+
+        private readonly IDictionary<String, RoslynProjectContext> _roslynProjects;
+
+        public RoslynSolutionContext(String solutionFileName, GenerationConfiguration configuration)
         {
-            _generationContext = generationContext;
+            _configuration = configuration;
             MSBuildLocator.RegisterDefaults();
 
             Workspace = MSBuildWorkspace.Create();
-            Solution = Workspace.OpenSolutionAsync(SolutionPath)
+            Solution = Workspace.OpenSolutionAsync(solutionFileName)
                 .GetAwaiter()
                 .GetResult();
 
@@ -32,35 +31,22 @@ namespace Pdbc.Cli.App
 
         }
 
-        public Project GetProject(String name)
-        {
-            return Solution.Projects.FirstOrDefault(x => x.Name.Contains(name));
-        }
-
-        private IDictionary<String, RoslynProjectContext> _roslynProjects;
         public RoslynProjectContext GetRoslynProjectContextFor(String name)
         {
             RoslynProjectContext roslyContext = null;
             if (!_roslynProjects.TryGetValue(name, out roslyContext))
             {
                 var project = GetProject(name);
-                roslyContext = new RoslynProjectContext(name, _generationContext, project);
+                roslyContext = new RoslynProjectContext(name, _configuration, project);
                 _roslynProjects.Add(name, roslyContext);
             }
 
             return roslyContext;
         }
 
-        public void InitializeProjects()
+        private Project GetProject(String name)
         {
-            GetRoslynProjectContextFor("Domain");
-            GetRoslynProjectContextFor("Data");
-        }
-
-        public RoslynProjectContext ResetProject(string name)
-        {
-            _roslynProjects.Remove(name);
-            return GetRoslynProjectContextFor(name);
+            return Solution.Projects.FirstOrDefault(x => x.Name.Contains(name));
         }
     }
 }

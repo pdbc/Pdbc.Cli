@@ -10,14 +10,23 @@ namespace Pdbc.Cli.App.Visitors
         public ClassVirtualizationVisitor()
         {
             Classes = new List<ClassDeclarationSyntax>();
+            Interfaces = new List<InterfaceDeclarationSyntax>();
         }
 
         public List<ClassDeclarationSyntax> Classes { get; set; }
+        public List<InterfaceDeclarationSyntax> Interfaces { get; set; }
 
         public override SyntaxNode VisitClassDeclaration(ClassDeclarationSyntax node)
         {
             node = (ClassDeclarationSyntax)base.VisitClassDeclaration(node);
-            Classes.Add(node); // save your visited classes
+            Classes.Add(node);
+            return node;
+        }
+
+        public override SyntaxNode VisitInterfaceDeclaration(InterfaceDeclarationSyntax node)
+        {
+            node = (InterfaceDeclarationSyntax)base.VisitInterfaceDeclaration(node);
+            Interfaces.Add(node);
             return node;
         }
     }

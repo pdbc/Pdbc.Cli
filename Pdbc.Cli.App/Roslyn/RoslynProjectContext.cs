@@ -10,20 +10,34 @@ namespace Pdbc.Cli.App.Roslyn
     public class RoslynProjectContext
     {
         public string Name { get; }
-        public GenerationContext GenerationContext { get; }
+        
+        public GenerationConfiguration Configuration { get; }
+
         public Project Project { get; }
 
-        public RoslynProjectContext(string name, GenerationContext generationContext, Project project)
+        public RoslynProjectContext(string name, 
+            GenerationConfiguration configuration, 
+            Project project)
         {
             Name = name;
-            GenerationContext = generationContext;
+            Configuration = configuration;
             Project = project;
         }
 
-
+        public string GetNamespace(string[] subNamespaces = null)
+        {
+            var result = $"{Configuration.RootNamespace}.{Name}";
+            if (subNamespaces != null)
+            {
+                var subNamespace = String.Join('.', subNamespaces);
+                result = $"{result}.{subNamespace}";
+            }
+            return result;
+        }
+        [Obsolete("Prefer the string[] overload")]
         public string GetNamespace(String subNamespace = null)
         {
-            var result = $"{GenerationContext.Configuration.RootNamespace}.{Name}";
+            var result = $"{Configuration.RootNamespace}.{Name}";
             if (subNamespace != null)
             {
                 result = $"{result}.{subNamespace}";
@@ -31,49 +45,23 @@ namespace Pdbc.Cli.App.Roslyn
             return result;
         }
 
-        #region Quick Actions
-
-        public string GetNamespaceForDomainModel()
+        public string GetFullFilenameFor(string className, params String[] subfolders)
         {
-            var result = $"{GenerationContext.Configuration.RootNamespace}.Domain.Model";
-            
-            return result;
+            var path = GetPath(subfolders);
+            var filename = $"{className}.cs";
+            return  Path.Combine(path, filename);
         }
-        public string GetNamespaceForDomainModelHelpers()
-        {
-            var result = $"{GenerationContext.Configuration.RootNamespace}.Tests.Helpers.Domain";
-
-            return result;
-        }
-        public string GetNamespaceForDataRepositories()
-        {
-            var result = $"{GenerationContext.Configuration.RootNamespace}.Data.Repositories";
-
-            return result;
-        }
-        public string GetNamespaceForIntegationTestDataExtensions()
-        {
-            var result = $"{GenerationContext.Configuration.RootNamespace}.IntegrationTests.Data.Extensions";
-
-            return result;
-        }
-        #endregion
-
         public string GetPath(params String[] subfolders)
         {
-            var result = Path.Combine(GenerationContext.BasePath, $"{GenerationContext.Configuration.RootNamespace}.{Name}");
+            var result = Path.Combine(Configuration.BasePath, $"{Configuration.RootNamespace}.{Name}");
             return AppendSubfolders(result, subfolders);
         }
         public string GetTestsPath(params String[] subfolders)
         {
-            var result = Path.Combine(GenerationContext.BasePath, "Tests", $"{GenerationContext.Configuration.RootNamespace}.{Name}");
+            var result = Path.Combine(Configuration.BasePath, "Tests", $"{Configuration.RootNamespace}.{Name}");
             return AppendSubfolders(result, subfolders);
         }
-        public string GetAppsPath(params String[] subfolders)
-        {
-            var result = Path.Combine(GenerationContext.BasePath, "Apps", $"{GenerationContext.Configuration.RootNamespace}.{Name}");
-            return AppendSubfolders(result, subfolders);
-        }
+
         private String AppendSubfolders(string path, params String[] subfolders)
         {
             EnsureDirectoryExists(path);
@@ -86,6 +74,66 @@ namespace Pdbc.Cli.App.Roslyn
             return path;
         }
 
+
+        #region Quick Actions
+
+        public string GetNamespaceForDomainModel()
+        {
+            var result = $"{Configuration.RootNamespace}.Domain.Model";
+
+            return result;
+        }
+        public string GetNamespaceForDomainModelHelpers()
+        {
+            var result = $"{Configuration.RootNamespace}.Tests.Helpers.Domain";
+
+            return result;
+        }
+        public string GetNamespaceForData()
+        {
+            var result = $"{Configuration.RootNamespace}.Data";
+
+            return result;
+        }
+        public string GetNamespaceForDataRepositories()
+        {
+            var result = $"{Configuration.RootNamespace}.Data.Repositories";
+
+            return result;
+        }
+        public string GetNamespaceForIntegationTestDataExtensions()
+        {
+            var result = $"{Configuration.RootNamespace}.IntegrationTests.Data.Extensions";
+
+            return result;
+        }
+        public string GetNamespaceForDto(string parametersPluralEntityName)
+        {
+            var result = $"{Configuration.RootNamespace}.Dto.{parametersPluralEntityName}";
+
+            return result;
+        }
+        public string GetNamespaceForRequests(string parametersPluralEntityName)
+        {
+            var result = $"{Configuration.RootNamespace}.Api.Contracts.Requests.{parametersPluralEntityName}";
+
+            return result;
+        }
+        public string GetNamespaceForServices(string parametersPluralEntityName)
+        {
+            var result = $"{Configuration.RootNamespace}.Api.Contracts.Services.{parametersPluralEntityName}";
+
+            return result;
+        }
+        
+        public string GetNamespaceForCoreCqrs(string entityName, String actionName)
+        {
+            var result = $"{Configuration.RootNamespace}.Core.CQRS.{entityName}.{actionName}";
+
+            return result;
+        }
+        #endregion
+
         // TODO this should go into FileHelperService ???
         private void EnsureDirectoryExists(string path)
         {
@@ -96,5 +144,8 @@ namespace Pdbc.Cli.App.Roslyn
         }
 
         public List<ClassDeclarationSyntax> Classes { get; set; }
+        public List<InterfaceDeclarationSyntax> Interfaces { get; set; }
+
+
     }
 }

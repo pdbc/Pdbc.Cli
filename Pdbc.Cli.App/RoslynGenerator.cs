@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Pdbc.Cli.App.Context;
 using Pdbc.Cli.App.Model;
 using Pdbc.Cli.App.Roslyn.Extensions;
+using Pdbc.Cli.App.Services;
 using Pdbc.Cli.App.Visitors;
 
 namespace Pdbc.Cli.App
@@ -22,14 +25,14 @@ namespace Pdbc.Cli.App
             _roslynFactory = new RoslynFactory();
         }
 
-        public async Task<ClassDeclarationSyntax> GeneratePublicClass(string fullFilename, 
-            string entityNamespace, 
-            string className, 
-            string[] usingStatements, 
+        public async Task<ClassDeclarationSyntax> GeneratePublicClass(string fullFilename,
+            string entityNamespace,
+            string className,
+            string[] usingStatements,
             string[] baseClasses)
         {
             var compilationUnitSyntax = _roslynFactory.CreateCompilationUnitSyntax(usingStatements);
-           
+
             var @namespace = _roslynFactory.CreateNamespaceDeclarationSyntax(entityNamespace);
 
             //  Create a class
@@ -53,8 +56,8 @@ namespace Pdbc.Cli.App
             var result = compilationUnitSyntax.GetClassDeclarationSyntaxFrom();
             return result;
         }
-        
-        public async Task<ClassDeclarationSyntax> GeneratePublicInterface(
+
+        public async Task<InterfaceDeclarationSyntax> GeneratePublicInterface(
             string fullFilename,
             string entityNamespace,
             string className,
@@ -83,7 +86,7 @@ namespace Pdbc.Cli.App
 
             // write the file to disk
             await _fileHelperService.WriteFile(fullFilename, code);
-            var result = compilationUnitSyntax.GetClassDeclarationSyntaxFrom();
+            var result = compilationUnitSyntax.GetInterfaceDeclarationSyntaxFrom();
             return result;
         }
 
@@ -121,7 +124,7 @@ namespace Pdbc.Cli.App
             var result = compilationUnitSyntax.GetClassDeclarationSyntaxFrom();
             return result;
         }
-        
+
 
         public async Task<ClassDeclarationSyntax> AppendProperty(string fullFilename,
             ClassDeclarationSyntax classDeclarationSyntax,
@@ -134,10 +137,27 @@ namespace Pdbc.Cli.App
             //var oldCode = classDeclarationSyntax.ToFullString();
             var propertyDeclarationExternalSystem = _roslynFactory.GenerateProperty(property.Type, property.Name);
             var updatedClassDeclarationSyntax = classDeclarationSyntax.AddAndKeep(propertyDeclarationExternalSystem);
-            
-            return await SaveClassDeclaration(fullFilename, classDeclarationSyntax, updatedClassDeclarationSyntax);
+
+            return await SaveClassDeclaration(fullFilename, classDeclarationSyntax, updatedClassDeclarationSyntax) as ClassDeclarationSyntax;
 
         }
+
+        public async Task<ClassDeclarationSyntax> AppendClassVariable(string fullFilename,
+            ClassDeclarationSyntax classDeclarationSyntax,
+            PropertyItem property)
+        {
+            var propertyDeclarationSyntax = classDeclarationSyntax.FindVariableDeclarationSyntaxFor(property.Name);
+            if (propertyDeclarationSyntax != null)
+                return classDeclarationSyntax;
+
+            //var oldCode = classDeclarationSyntax.ToFullString();
+            var propertyDeclarationExternalSystem = _roslynFactory.GenerateFieldVariable(property.Type, property.Name);
+            var updatedClassDeclarationSyntax = classDeclarationSyntax.AddAndKeep(propertyDeclarationExternalSystem);
+
+            return await SaveClassDeclaration(fullFilename, classDeclarationSyntax, updatedClassDeclarationSyntax) as ClassDeclarationSyntax;
+
+        }
+
         public async Task<ClassDeclarationSyntax> AppendProtectedOverridableMethod(string fullFilename,
                 ClassDeclarationSyntax classDeclarationSyntax,
                 MethodItem method, List<PropertyItem> properties,
@@ -153,9 +173,10 @@ namespace Pdbc.Cli.App
 
             var updatedClassDeclarationSyntax = classDeclarationSyntax.AddAndKeep(methodDeclarationSyntax);
 
-            return await SaveClassDeclaration(fullFilename, classDeclarationSyntax, updatedClassDeclarationSyntax);
+            return await SaveClassDeclaration(fullFilename, classDeclarationSyntax, updatedClassDeclarationSyntax) as ClassDeclarationSyntax;
 
         }
+
 
         public async Task<ClassDeclarationSyntax> AppendPublicOverridableMethod(string fullFilename,
             ClassDeclarationSyntax classDeclarationSyntax,
@@ -173,18 +194,54 @@ namespace Pdbc.Cli.App
 
             if (bodyStatements != null)
             {
-                foreach(var b in bodyStatements) 
+                foreach (var b in bodyStatements)
                 {
                     methodDeclarationSyntax = methodDeclarationSyntax.AddBodyStatements(SyntaxFactory.ParseStatement(b));
                 }
             }
-            
+
 
             var updatedClassDeclarationSyntax = classDeclarationSyntax.AddAndKeep(methodDeclarationSyntax);
 
-            return await SaveClassDeclaration(fullFilename, classDeclarationSyntax, updatedClassDeclarationSyntax);
+            return await SaveClassDeclaration(fullFilename, classDeclarationSyntax, updatedClassDeclarationSyntax) as ClassDeclarationSyntax;
 
         }
+
+        public async Task<ClassDeclarationSyntax> AppendPublicMethodNotImplemented(string fullFilename,
+            ClassDeclarationSyntax classDeclarationSyntax,
+            MethodItem method, List<PropertyItem> properties)
+        {
+            var methodDeclarationSyntax = classDeclarationSyntax.FindMethodDeclarationSyntaxFor(method.Name);
+            if (methodDeclarationSyntax != null)
+                return classDeclarationSyntax;
+
+            methodDeclarationSyntax = _roslynFactory.GeneratePublicMethod(method.Name, method.ReturnType)
+                .AddMethodParameters(properties)
+                .AddMethodBody("throw new NotImplementedException();");
+            
+            var updatedClassDeclarationSyntax = classDeclarationSyntax.AddAndKeep(methodDeclarationSyntax);
+
+            return await SaveClassDeclaration(fullFilename, classDeclarationSyntax, updatedClassDeclarationSyntax) as ClassDeclarationSyntax;
+
+        }
+
+        public async Task<ClassDeclarationSyntax> GenerateConstructor(string fullFilename,
+            string className,
+            ClassDeclarationSyntax classDeclarationSyntax,
+            List<PropertyItem> parameters)
+        {
+            var constructorDeclarationSyntax = classDeclarationSyntax.FindConstructorDeclarationSyntax();
+            if (constructorDeclarationSyntax != null)
+                return classDeclarationSyntax;
+
+            constructorDeclarationSyntax = _roslynFactory.GenerateConstructorCallingBase(className, parameters);
+
+            var updatedClassDeclarationSyntax = classDeclarationSyntax.AddAndKeep(constructorDeclarationSyntax);
+
+            return await SaveClassDeclaration(fullFilename, classDeclarationSyntax, updatedClassDeclarationSyntax) as ClassDeclarationSyntax;
+            
+        }
+
 
         public async Task<ClassDeclarationSyntax> AppendAssertionFailTestMethod(string fullFilename,
             ClassDeclarationSyntax classDeclarationSyntax,
@@ -200,13 +257,15 @@ namespace Pdbc.Cli.App
 
             var updatedClassDeclarationSyntax = classDeclarationSyntax.AddAndKeep(methodDeclarationSyntax);
 
-            return await SaveClassDeclaration(fullFilename, classDeclarationSyntax, updatedClassDeclarationSyntax);
+            return await SaveClassDeclaration(fullFilename, classDeclarationSyntax, updatedClassDeclarationSyntax) as ClassDeclarationSyntax;
 
         }
 
-        private async Task<ClassDeclarationSyntax> SaveClassDeclaration(string fullFilename,
-            ClassDeclarationSyntax classDeclarationSyntax,
-            ClassDeclarationSyntax updatedClassDeclarationSyntax)
+
+
+        private async Task<TypeDeclarationSyntax> SaveClassDeclaration(string fullFilename,
+            TypeDeclarationSyntax classDeclarationSyntax,
+            TypeDeclarationSyntax updatedClassDeclarationSyntax)
         {
             NamespaceDeclarationSyntax @namespace = classDeclarationSyntax.GetParentNodeOfType<NamespaceDeclarationSyntax>();
             if (@namespace != null)
@@ -221,7 +280,7 @@ namespace Pdbc.Cli.App
 
                 var updateCompilationSyntax = @compilationUnitSyntax.ReplaceNode(@namespace, updatedRoot);
                 var code = updateCompilationSyntax.NormalizeWhitespace().ToFullString();
-                
+
                 await _fileHelperService.WriteFile(fullFilename, code);
                 {
                     var result = updateCompilationSyntax.GetClassDeclarationSyntaxFrom();
@@ -234,5 +293,132 @@ namespace Pdbc.Cli.App
 
 
 
+    //    // Complete methods
+    //    public async Task<ClassDeclarationSyntax> AppendCqrsHandlerStoreMethod(string fullFilename,
+    //ClassDeclarationSyntax classDeclarationSyntax,
+    //StandardAction generationContext)
+    //    {
+    //        var properties = new List<PropertyItem>()
+    //        {
+    //            new PropertyItem(generationContext.ToCqrsInputClassName(), "request"),
+    //            PropertyItem.CancellationTokenPropertyItem
+    //        };
+    //        var method = new MethodItem($"Task<{generationContext.ToCqrsOutputClassName()}>", "Handle");
+
+    //        var methodDeclarationSyntax = classDeclarationSyntax.FindMethodDeclarationSyntaxFor(method.Name);
+    //        if (methodDeclarationSyntax != null)
+    //            return classDeclarationSyntax;
+
+    //        methodDeclarationSyntax = _roslynFactory.GeneratePublicMethod(method.Name, method.ReturnType)
+    //            .AddMethodParameters(properties)
+    //            .WithBody(SyntaxFactory.Block(
+
+    //                SyntaxFactory.LocalDeclarationStatement(_roslynFactory.GenerateVariableDeclaration(generationContext._entityName)),
+    //                SyntaxFactory.LocalDeclarationStatement(_roslynFactory.GenerateVariableDeclarationLoadbyExternalSystemAndIdentifier()),
+
+    //                SyntaxFactory.IfStatement(
+    //                        SyntaxFactory.BinaryExpression(
+    //                            SyntaxKind.EqualsExpression,
+    //                            SyntaxFactory.IdentifierName("entity"),
+    //                            SyntaxFactory.LiteralExpression(
+    //                                SyntaxKind.NullLiteralExpression)),
+    //                        SyntaxFactory.Block(
+    //                            SyntaxFactory.ExpressionStatement(
+
+    //                                SyntaxFactory.AssignmentExpression(
+    //                                    SyntaxKind.SimpleAssignmentExpression,
+    //                                    SyntaxFactory.IdentifierName("entity"),
+    //                                    SyntaxFactory.InvocationExpression(
+    //                                            SyntaxFactory.MemberAccessExpression(
+    //                                                SyntaxKind.SimpleMemberAccessExpression,
+    //                                                SyntaxFactory.IdentifierName("_factory"),
+    //                                                SyntaxFactory.IdentifierName("Create")))
+    //                                        .WithArgumentList(
+    //                                            SyntaxFactory.ArgumentList(
+    //                                                SyntaxFactory.SingletonSeparatedList<ArgumentSyntax>(
+    //                                                    SyntaxFactory.Argument(
+    //                                                        SyntaxFactory.MemberAccessExpression(
+    //                                                            SyntaxKind.SimpleMemberAccessExpression,
+    //                                                            SyntaxFactory.IdentifierName("request"),
+    //                                                            SyntaxFactory.IdentifierName("Project")))))))
+
+    //                                ),
+    //                            SyntaxFactory.ExpressionStatement(
+    //                                SyntaxFactory.InvocationExpression(
+    //                                        SyntaxFactory.MemberAccessExpression(
+    //                                            SyntaxKind.SimpleMemberAccessExpression,
+    //                                            SyntaxFactory.IdentifierName("_repository"),
+    //                                            SyntaxFactory.IdentifierName("Insert")))
+    //                                    .WithArgumentList(
+    //                                        SyntaxFactory.ArgumentList(
+    //                                            SyntaxFactory.SingletonSeparatedList<ArgumentSyntax>(
+    //                                                SyntaxFactory.Argument(
+    //                                                    SyntaxFactory.IdentifierName("entity"))))))))
+    //                    .WithElse(
+    //                        SyntaxFactory.ElseClause(
+    //                            SyntaxFactory.Block(
+    //                                SyntaxFactory.ExpressionStatement(
+    //                                    SyntaxFactory.InvocationExpression(
+    //                                            SyntaxFactory.MemberAccessExpression(
+    //                                                SyntaxKind.SimpleMemberAccessExpression,
+    //                                                SyntaxFactory.IdentifierName("_changesHandler"),
+    //                                                SyntaxFactory.IdentifierName("ApplyChanges")))
+    //                                        .WithArgumentList(
+    //                                            SyntaxFactory.ArgumentList(
+    //                                                SyntaxFactory.SeparatedList<ArgumentSyntax>(
+    //                                                    new SyntaxNodeOrToken[]
+    //                                                    {
+    //                                                        SyntaxFactory.Argument(
+    //                                                            SyntaxFactory.IdentifierName("entity")),
+    //                                                        SyntaxFactory.Token(SyntaxKind.CommaToken),
+    //                                                        SyntaxFactory.Argument(
+    //                                                            SyntaxFactory.MemberAccessExpression(
+    //                                                                SyntaxKind.SimpleMemberAccessExpression,
+    //                                                                SyntaxFactory.IdentifierName("request"),
+    //                                                                SyntaxFactory.IdentifierName("Project")))
+    //                                                    })))),
+    //                                SyntaxFactory.ExpressionStatement(
+    //                                    SyntaxFactory.InvocationExpression(
+    //                                            SyntaxFactory.MemberAccessExpression(
+    //                                                SyntaxKind.SimpleMemberAccessExpression,
+    //                                                SyntaxFactory.IdentifierName("_repository"),
+    //                                                SyntaxFactory.IdentifierName("Update")))
+    //                                        .WithArgumentList(
+    //                                            SyntaxFactory.ArgumentList(
+    //                                                SyntaxFactory.SingletonSeparatedList<ArgumentSyntax>(
+    //                                                    SyntaxFactory.Argument(
+    //                                                        SyntaxFactory.IdentifierName("entity"))))))))),
+    //                SyntaxFactory.ReturnStatement(
+    //                    SyntaxFactory.InvocationExpression(
+    //                        SyntaxFactory.MemberAccessExpression(
+    //                            SyntaxKind.SimpleMemberAccessExpression,
+    //                            SyntaxFactory.IdentifierName("Nothing"),
+    //                            SyntaxFactory.IdentifierName("AtAll"))))));
+
+
+    //        var updatedClassDeclarationSyntax = classDeclarationSyntax.AddAndKeep(methodDeclarationSyntax);
+
+    //        return await SaveClassDeclaration(fullFilename, classDeclarationSyntax, updatedClassDeclarationSyntax);
+
+    //    }
+
+
+        public async Task<InterfaceDeclarationSyntax> AppendServiceContractMethod(string fullFilename,
+            InterfaceDeclarationSyntax syntax, GenerationContext generationContext)
+        {
+            // Sample
+            // Task<ListAssetsResponse> ListAssets(ListAssetsRequest request);
+            var methodDeclarationSyntax = syntax.FindMethodDeclarationSyntaxFor(generationContext.ServiceActionName);
+            if (methodDeclarationSyntax != null)
+                return syntax;
+
+            var property = new PropertyItem(generationContext.RequestInputClassName, "request");
+            methodDeclarationSyntax = _roslynFactory.GeneratePublicMethod(generationContext.ServiceActionName, $"Task<{generationContext.RequestOutputClassName}>")
+                .AddMethodParameters(new List<PropertyItem>() { property });
+
+            var updatedClassDeclarationSyntax = syntax.AddAndKeep(methodDeclarationSyntax);
+
+            return await SaveClassDeclaration(fullFilename, syntax, updatedClassDeclarationSyntax) as InterfaceDeclarationSyntax;
+        }
     }
 }

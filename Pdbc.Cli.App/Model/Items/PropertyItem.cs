@@ -4,6 +4,9 @@ namespace Pdbc.Cli.App.Model
 {
     public class PropertyItem
     {
+        public static PropertyItem CancellationTokenPropertyItem =
+            new PropertyItem("CancellationToken", "cancellationToken");
+
         public PropertyItem()
         {
             

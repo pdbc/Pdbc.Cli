@@ -32,95 +32,19 @@ namespace Pdbc.Cli.App.Model
         [Option('a', "action", Required = false, HelpText = "The action you want to generate for the entity.")]
         public String Action { get; set; }
 
+        [Option('r', "withoutResponse", Required = false, HelpText = "Indicates that the action should not return a response (only for commands).")]
+        public Boolean WithoutResponse { get; set; }
+
+
         public void WriteParameters()
         {
-            // TODO Parse args
+            Console.WriteLine("Mandatory Startup Parameters");
+            Console.WriteLine($" == EntityName: {EntityName}");
 
-            Console.WriteLine("Startup Parameters");
-            Console.WriteLine($"EntityName: {EntityName}");
-            Console.WriteLine($"PluralEntityName: {PluralEntityName}");
-
-            Console.WriteLine($"Action: {Action}");
-            Console.WriteLine($"ActionName: {ActionName}");
-            Console.WriteLine($"FullActionName: {FullActionName}");
+            Console.WriteLine("Optional Startup Parameters");
+            Console.WriteLine($" == PluralEntityName: {PluralEntityName}");
+            Console.WriteLine($" == Action: {Action}");
         }
 
-        public string ActionName
-        {
-            get
-            {
-                if (Action is "Store" or "Create" or "Update" or "List" or "Get")
-                {
-                    return Action;
-                }
-
-                return Action;
-            }
-        }
-
-        public string FullActionName
-        {
-            get
-            {
-                return $"{ActionName}{EntityName}";
-            }
-        }
-
-        public Boolean ShouldGenerateCqrs()
-        {
-            return ActionName != null;
-        }
-
-        public String CqrsInputType
-        {
-            get
-            {
-                if (ActionName == "Get" ||
-                    ActionName == "List")
-                {
-                    return "Query";
-                }
-
-                return "Command";
-            }
-        }
-
-        public string CqrsInputClassName => $"{ActionName}{EntityName}{CqrsInputType}";
-        public string CqrsOutputClassName => $"{ActionName}{EntityName}{CqrsOutputType}";
-
-        public String CqrsOutputType
-        {
-            get
-            {
-                if (ActionName == "Get" ||
-                    ActionName == "List")
-                {
-                    return "ViewModel";
-                }
-
-                return "Result";
-            }
-        }
-        public string ActionEntityDtoName => $"{EntityName}{ActionName}Dto";
-        public string ActionEntityInterfaceDtoName => $"I{ActionEntityDtoName}";
-
-
-
-        public string EntityConfigurationName=> $"{EntityName}Configuration";
-
-        public string EntitySpecificationName => $"{EntityName}Specification";
-
-        public string EntityRepositoryClassName => $"{EntityName}Repository";
-
-        public string EntityRepositoryInterfaceName => $"I{EntityRepositoryClassName}";
-
-        public string EntityRepositorySpecificationName => $"{EntityRepositoryClassName}Specification";
-
-        public string EntityRepositorySpecificationQueriesName => $"{EntityRepositoryClassName}QueriesSpecification";
-
-        public string EntityBuilderName => $"{EntityName}Builder";
-
-        public string EntityTestDataBuilderName => $"{EntityName}TestDataBuilder";
-        public string DatabaseContextName { get; set; }
     }
 }

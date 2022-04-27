@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace Pdbc.Cli.App
+namespace Pdbc.Cli.App.Services
 {
     public class FileHelperService
     {

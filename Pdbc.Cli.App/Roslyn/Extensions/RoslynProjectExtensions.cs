@@ -8,30 +8,25 @@ namespace Pdbc.Cli.App.Roslyn.Extensions
 {
     public static class RoslynProjectContextExtensions
     {
-        public static async Task<List<ClassDeclarationSyntax>> GetclassesFromProject(this RoslynProjectContext roslynProjectContext, bool forceReload = false)
+        public static async Task LoadClassesAndInterfaces(this RoslynProjectContext roslynProjectContext, bool forceReload = false)
         {
-            if (!forceReload) {
-                if (roslynProjectContext.Classes != null)
-                    return roslynProjectContext.Classes;
-            }
-
             var compilation = await roslynProjectContext.Project.GetCompilationAsync();
-
             var classVisitor = new ClassVirtualizationVisitor();
 
             foreach (var syntaxTree in compilation.SyntaxTrees)
             {
-                classVisitor.Visit(syntaxTree.GetRoot());
+                var root = syntaxTree.GetRoot();
+                classVisitor.Visit(root);
             }
 
             roslynProjectContext.Classes = classVisitor.Classes;
-            return roslynProjectContext.Classes;
+            roslynProjectContext.Interfaces = classVisitor.Interfaces;
         }
 
         public static async Task<ClassDeclarationSyntax> GetClassByName(this RoslynProjectContext roslynProjectContext, string className)
         {
-            var classes = await roslynProjectContext.GetclassesFromProject();
-            var entity = classes.FirstOrDefault(x => x.Identifier.ValueText == className);
+            await roslynProjectContext.LoadClassesAndInterfaces();
+            var entity = roslynProjectContext.Classes.FirstOrDefault(x => x.Identifier.ValueText == className);
             if (entity != null)
             {
                 return entity;
@@ -41,8 +36,8 @@ namespace Pdbc.Cli.App.Roslyn.Extensions
         }
         public static async Task<ClassDeclarationSyntax> GetClassEndingWithName(this RoslynProjectContext roslynProjectContext, string className)
         {
-            var classes = await roslynProjectContext.GetclassesFromProject();
-            var entity = classes.FirstOrDefault(x => x.Identifier.ValueText.EndsWith(className));
+            await roslynProjectContext.LoadClassesAndInterfaces();
+            var entity = roslynProjectContext.Classes.FirstOrDefault(x => x.Identifier.ValueText.EndsWith(className));
             if (entity != null)
             {
                 return entity;
@@ -50,5 +45,17 @@ namespace Pdbc.Cli.App.Roslyn.Extensions
 
             return null;
         }
+        public static async Task<InterfaceDeclarationSyntax> GetInterfaceByName(this RoslynProjectContext roslynProjectContext, string className)
+        {
+            await roslynProjectContext.LoadClassesAndInterfaces();
+            var entity = roslynProjectContext.Interfaces.FirstOrDefault(x => x.Identifier.ValueText == className);
+            if (entity != null)
+            {
+                return entity;
+            }
+
+            return null;
+        }
+        
     }
 }
