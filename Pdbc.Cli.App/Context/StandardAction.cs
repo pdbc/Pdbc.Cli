@@ -59,6 +59,23 @@ namespace Pdbc.Cli.App.Context
             return true;
         }
 
+        public bool RequiresFactory()
+        {
+            // TODO if we do not want a response Store/Update/Create should return false!
+            if (_actionName is "Store" or "Create")
+                return true;
+
+            return false;
+        }
+
+        public bool RequiresChangesHandler()
+        {
+            // TODO if we do not want a response Store/Update/Create should return false!
+            if (_actionName is "Store" or "Update")
+                return true;
+
+            return false;
+        }
 
         #region CQRS Type
 

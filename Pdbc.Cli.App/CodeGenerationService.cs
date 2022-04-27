@@ -88,19 +88,24 @@ namespace Pdbc.Cli.App
                 await GenerateCqrsValidatorClass();
                 await GenerateCqrsValidatorUnitTestClass();
 
-                await GenerateCqrsFactoryClass();
-                await GenerateCqrsFactoryUnitTestClass();
+                if (_generationContext.StandardActionInfo.RequiresFactory())
+                {
+                    await GenerateCqrsFactoryClass();
+                    await GenerateCqrsFactoryUnitTestClass();
+                }
 
-                await GenerateCqrsChangesHandlerClass();
-                await GenerateCqrsChangesHandlerUnitTestClass();
-
+                if (_generationContext.StandardActionInfo.RequiresChangesHandler())
+                {
+                    await GenerateCqrsChangesHandlerClass();
+                    await GenerateCqrsChangesHandlerUnitTestClass();
+                }
 
                 await GenerateRequestInputClass();
                 await GenerateRequestOutputClass();
                 await GenerateServiceContract();
 
                 // add method to controller
-                // add method to implementation WebApiServiceContract
+                await GenerateWebApiServiceContractClass();
 
                 await GenerateCqrsServiceContractInterface();
                 await GenerateCqrsServiceContractClass();
@@ -1322,6 +1327,56 @@ namespace Pdbc.Cli.App
             //entity = await _roslynGenerator.AppendServiceContractMethod(fullFilename, entity, _generationContext);
         }
 
+        public async Task GenerateWebApiServiceContractClass()
+        {
+            var className = _generationContext.WebApiServiceContractName;
+            var subfolders = new[] { _generationContext.PluralEntityName };
+
+            var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("Api.ServiceAgent");
+            var fullFilename = roslynProjectContext.GetFullFilenameFor(className, subfolders);
+
+            // Generate the entity
+
+            var entity = await roslynProjectContext.GetClassByName(className);
+            if (entity == null)
+            {
+                var entityNamespace = roslynProjectContext.GetNamespace(subfolders);
+
+                var usingStatements = new[]
+                {
+                    "System",
+                    "Aertssen.Framework.Api.ServiceAgents",
+                    "Microsoft.Extensions.Logging",
+                    roslynProjectContext.GetNamespaceForServices(_generationContext.PluralEntityName),
+                    roslynProjectContext.GetNamespaceForRequests(_generationContext.PluralEntityName),
+                    roslynProjectContext.GetNamespaceForDto(_generationContext.PluralEntityName)
+                }
+                    .AddAertssenFrameworkContractUsingStatements();
+
+                var baseClasses = new string[]
+                {
+                    "WebApiService",
+                    _generationContext.ServiceContractInterfaceName
+                };
+
+                entity = await _roslynGenerator.GeneratePublicClass(
+                    fullFilename,
+                    entityNamespace,
+                    className,
+                    usingStatements,
+                    baseClasses.ToArray()
+                );
+            }
+
+            var parameters = new List<PropertyItem>()
+            {
+                new PropertyItem("Func<IWebApiClientProxy>", "webApiClientFactory"),
+                new PropertyItem($"ILogger<{_generationContext.WebApiServiceContractName}>", "logger")
+            };
+            await _roslynGenerator.GenerateConstructor(fullFilename, _generationContext.WebApiServiceContractName, entity, parameters);
+            //Task<ListAssetsResponse> ListAssets(ListAssetsRequest request);
+            //entity = await _roslynGenerator.AppendServiceContractMethod(fullFilename, entity, _generationContext);
+        }
 
         #endregion
 

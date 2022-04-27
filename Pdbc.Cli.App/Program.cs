@@ -26,7 +26,7 @@ namespace Pdbc.Cli.App
             {
                 EntityName = "Address",
                 PluralEntityName = "Addresses",
-                Action = "Store"
+                Action = "List"
             };
 
             RunOptions(startupParameter);
