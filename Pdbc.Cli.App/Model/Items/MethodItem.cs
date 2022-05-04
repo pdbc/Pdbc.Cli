@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Pdbc.Cli.App.Model
+namespace Pdbc.Cli.App.Model.Items
 {
     public class MethodItem
     {

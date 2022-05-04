@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using CommandLine;
+using Pdbc.Cli.App.Context;
 using Pdbc.Cli.App.Model;
 using Pdbc.Cli.App.Roslyn;
+using Pdbc.Cli.App.Roslyn.Generation;
 using Pdbc.Cli.App.Services;
 
 namespace Pdbc.Cli.App
@@ -65,14 +67,75 @@ namespace Pdbc.Cli.App
             var roslySolutionContext = new RoslynSolutionContext(solutionPath, cliConfiguration);
             Console.WriteLine($"Parsed the solution {solutionPath} to setup the workspace");
             
-            //var context = new RoslynGenerationContext();
-            var codeGenerationService = new CodeGenerationService(roslySolutionContext, 
-                startupParameters, 
-                cliConfiguration);
+            // Generation Context (how will we handle multipe context (for example LIST/GET/STORE/DELETE in one go)
+            var generationContext = new GenerationContext(startupParameters, cliConfiguration);
 
-            codeGenerationService.SetupEntity()
-                                 .GetAwaiter()
-                                 .GetResult();
+
+            var entityGenerationService = new EntityGenerationService(roslySolutionContext, fileHelperService, generationContext);
+            entityGenerationService.Generate()
+                .GetAwaiter()
+                .GetResult();
+
+            var repositoryGenerationService = new RepositoryGenerationService(roslySolutionContext, fileHelperService, generationContext);
+            repositoryGenerationService.Generate()
+                .GetAwaiter()
+                .GetResult();
+
+            var entityFrameworkMappingGenerationService = new EntityFrameworkMappingGenerationService(roslySolutionContext, fileHelperService, generationContext);
+            entityFrameworkMappingGenerationService.Generate()
+                .GetAwaiter()
+                .GetResult();
+
+            var entityFrameworkDbContextGenerationService = new EntityFrameworkDbContextGenerationService(roslySolutionContext, fileHelperService, generationContext);
+            entityFrameworkDbContextGenerationService.Generate()
+                .GetAwaiter()
+                .GetResult();
+
+
+            if (generationContext.ShouldCreateCqrsFiles())
+            {
+                if (generationContext.RequiresActionDto())
+                {
+                    var entityActionDtoGenerationService = new EntityActionDtoGenerationService(roslySolutionContext, fileHelperService, generationContext);
+                    entityActionDtoGenerationService.Generate()
+                        .GetAwaiter()
+                        .GetResult();
+                }
+
+                if (generationContext.RequiresDataDto())
+                {
+                    var entityDataDtoGenerationService = new EntityDataDtoGenerationService(roslySolutionContext, fileHelperService, generationContext);
+                    entityDataDtoGenerationService.Generate()
+                        .GetAwaiter()
+                        .GetResult();
+                }
+
+                var cqrsGenerationService = new CqrsGenerationService(roslySolutionContext, fileHelperService, generationContext);
+                cqrsGenerationService.Generate()
+                    .GetAwaiter()
+                    .GetResult();
+
+                var requestsGenerationService = new RequestsGenerationService(roslySolutionContext, fileHelperService, generationContext);
+                requestsGenerationService.Generate()
+                    .GetAwaiter()
+                    .GetResult();
+
+                var servicesGenerationService = new ServicesGenerationService(roslySolutionContext, fileHelperService, generationContext);
+                requestsGenerationService.Generate()
+                    .GetAwaiter()
+                    .GetResult();
+
+
+            }
+
+            //var context = new RoslynGenerationContext();
+            //var codeGenerationService = new CodeGenerationService(roslySolutionContext,
+            //    startupParameters,
+            //    cliConfiguration);
+
+            //codeGenerationService.SetupEntity()
+            //                     .GetAwaiter()
+            //                     .GetResult();
         }
     }
 

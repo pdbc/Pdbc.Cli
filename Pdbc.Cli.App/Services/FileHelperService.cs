@@ -3,6 +3,9 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Pdbc.Cli.App.Roslyn.Extensions;
 
 namespace Pdbc.Cli.App.Services
 {
@@ -41,6 +44,19 @@ namespace Pdbc.Cli.App.Services
             }
 
             return new T();
+        }
+
+
+        public async Task WriteFile(String filename, SyntaxNode syntaxNode)
+        {
+            var compilationUnitSyntax = syntaxNode.GetParentNodeOfType<CompilationUnitSyntax>();
+            var code = compilationUnitSyntax
+                .NormalizeWhitespace()
+                .ToFullString();
+
+            // write the file to disk
+            await WriteFile(filename, code);
+            
         }
     }
 }

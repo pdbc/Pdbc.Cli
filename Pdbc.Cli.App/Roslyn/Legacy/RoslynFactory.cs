@@ -1,17 +1,13 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Net.Sockets;
-using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Pdbc.Cli.App.Model;
+using Pdbc.Cli.App.Model.Items;
 using Pdbc.Cli.App.Roslyn.Extensions;
-
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
-namespace Pdbc.Cli.App
+namespace Pdbc.Cli.App.Roslyn.Legacy
 {
     public class RoslynFactory
     {

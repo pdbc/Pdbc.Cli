@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Pdbc.Cli.App.Model;
+using Pdbc.Cli.App.Model.Items;
 
 namespace Pdbc.Cli.App.Roslyn.Extensions
 {
@@ -71,14 +72,7 @@ namespace Pdbc.Cli.App.Roslyn.Extensions
 
             return syntax;
         }
-        public static MethodDeclarationSyntax AddMethodBody(this MethodDeclarationSyntax classDeclarationSyntax,
-            string body)
-        {
-            var methodBody = SyntaxFactory.ParseStatement(body);
-            return classDeclarationSyntax
-                .WithBody(SyntaxFactory.Block(methodBody));
-            ;
-        }
+ 
         public static MethodDeclarationSyntax AddAttribute(this MethodDeclarationSyntax syntax, string attributeName)
         {
             var attributeList = SyntaxFactory.AttributeList(SyntaxFactory.SingletonSeparatedList(

@@ -1,18 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Pdbc.Cli.App.Context;
-using Pdbc.Cli.App.Model;
+using Pdbc.Cli.App.Extensions;
+using Pdbc.Cli.App.Model.Items;
 using Pdbc.Cli.App.Roslyn.Extensions;
 using Pdbc.Cli.App.Services;
-using Pdbc.Cli.App.Visitors;
 
-namespace Pdbc.Cli.App
+namespace Pdbc.Cli.App.Roslyn.Legacy
 {
     public class RoslynGenerator
     {

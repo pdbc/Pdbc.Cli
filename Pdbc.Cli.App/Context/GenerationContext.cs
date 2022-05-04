@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using Pdbc.Cli.App.Extensions;
 using Pdbc.Cli.App.Model;
 
@@ -42,7 +41,17 @@ namespace Pdbc.Cli.App.Context
         // Query/Command class
         public string CqrsInputClassName => $"{EntityActionName}{CqrsInputType}";
         public string CqrsOutputClassName => $"{EntityActionName}{CqrsOutputType}";
-        
+
+        public string GetCqrsOutputClassNameBasedOnAction()
+        {
+            var outputCqrsOutputClassName = CqrsOutputClassName;
+            if (IsListAction())
+            {
+                outputCqrsOutputClassName = $"IQueryable<{DataDtoClass}>";
+            }
+
+            return outputCqrsOutputClassName;
+        }
         public string CqrsHandlerClassName => CqrsInputClassName.ToHandler();
         public string CqrsValidatorClassName => CqrsInputClassName.ToValidator();
         public string CqrsFactoryClassName => CqrsInputClassName.ToFactory();
@@ -76,6 +85,8 @@ namespace Pdbc.Cli.App.Context
         public string FactoryType => $"IFactory<{ActionDtoInterface},{EntityName}>";
         public string ChangesHandlerType => $"IChangesHandler<{ActionDtoInterface},{EntityName}>";
         public string RepositoryGenericType => $"IEntityRepository<{EntityName}>";
+
+        public string DbContextName => $"{Configuration.ApplicationName}DbContext";
         //{
         //    return $"";
         //}
@@ -90,40 +101,37 @@ namespace Pdbc.Cli.App.Context
         //}
 
         #endregion
-    }
 
-    public static class UsingStatementExtensions
-    {
-        public static string[] AddUnitTestUsingStatement(this string[] usings)
+
+        // TODO provide parameters for this ??
+        public bool ShouldCreateCqrsFiles()
         {
-            var result = new List<string>(usings);
-            result.Add("Aertssen.Framework.Tests");
-            result.Add("Aertssen.Framework.Tests.Extensions");
-            result.Add("NUnit.Framework");
-            return result.ToArray();
+            return StandardActionInfo.ShouldGenerateCqrs();
         }
 
-        public static string[] AddAertssenFrameworkAuditModelStatements(this string[] usings)
+        public bool RequiresActionDto()
         {
-            var result = new List<string>(usings);
-            result.Add("Aertssen.Framework.Audit.Core.Model.Base");
-            return result.ToArray();
+            return StandardActionInfo.RequiresActionDto();
         }
 
-        public static string[] AddAertssenFrameworkCoreUsingStatements(this string[] usings)
+        public bool RequiresDataDto()
         {
-            var result = new List<string>(usings);
-            result.Add("Aertssen.Framework.Core.Builders");
-            result.Add("Aertssen.Framework.Core.Extensions");
-            return result.ToArray();
+            return StandardActionInfo.RequiresDataDto();
         }
-        public static string[] AddAertssenFrameworkContractUsingStatements(this string[] usings)
+
+        public bool RequiresFactory()
         {
-            var result = new List<string>(usings);
-            result.Add("Aertssen.Framework.Api.Contracts");
-            result.Add("Aertssen.Framework.Api.Contracts.Attributes");
-            return result.ToArray();
+            return StandardActionInfo.RequiresFactory();
         }
-        
+
+        public bool RequiresChangesHandler()
+        {
+            return StandardActionInfo.RequiresChangesHandler();
+        }
+
+        public bool IsListAction()
+        {
+            return ActionName == "List";
+        }
     }
 }

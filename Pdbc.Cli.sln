@@ -10,6 +10,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8A04660A-4097-490C-BDE7-EF040E225CD9}"
 	ProjectSection(SolutionItems) = preProject
 		cli-configuration.json = cli-configuration.json
+		README.md = README.md
 	EndProjectSection
 EndProject
 Global

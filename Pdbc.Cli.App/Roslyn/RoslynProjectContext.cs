@@ -51,16 +51,25 @@ namespace Pdbc.Cli.App.Roslyn
             var filename = $"{className}.cs";
             return  Path.Combine(path, filename);
         }
-        public string GetPath(params String[] subfolders)
+        public string GetFullTestsFilenameFor(string className, params String[] subfolders)
         {
-            var result = Path.Combine(Configuration.BasePath, $"{Configuration.RootNamespace}.{Name}");
-            return AppendSubfolders(result, subfolders);
+            var path = GetTestsPath(subfolders);
+            var filename = $"{className}.cs";
+            return Path.Combine(path, filename);
         }
-        public string GetTestsPath(params String[] subfolders)
+
+        private string GetTestsPath(params String[] subfolders)
         {
             var result = Path.Combine(Configuration.BasePath, "Tests", $"{Configuration.RootNamespace}.{Name}");
             return AppendSubfolders(result, subfolders);
         }
+
+        private string GetPath(params String[] subfolders)
+        {
+            var result = Path.Combine(Configuration.BasePath, $"{Configuration.RootNamespace}.{Name}");
+            return AppendSubfolders(result, subfolders);
+        }
+ 
 
         private String AppendSubfolders(string path, params String[] subfolders)
         {
@@ -83,9 +92,9 @@ namespace Pdbc.Cli.App.Roslyn
 
             return result;
         }
-        public string GetNamespaceForDomainModelHelpers()
+        public string GetNamespaceForDomainModelHelpers(string parametersPluralEntityName)
         {
-            var result = $"{Configuration.RootNamespace}.Tests.Helpers.Domain";
+            var result = $"{Configuration.RootNamespace}.Tests.Helpers.Domain.{parametersPluralEntityName}";
 
             return result;
         }
@@ -101,12 +110,14 @@ namespace Pdbc.Cli.App.Roslyn
 
             return result;
         }
+        //
         public string GetNamespaceForIntegationTestDataExtensions()
         {
             var result = $"{Configuration.RootNamespace}.IntegrationTests.Data.Extensions";
 
             return result;
         }
+
         public string GetNamespaceForDto(string parametersPluralEntityName)
         {
             var result = $"{Configuration.RootNamespace}.Dto.{parametersPluralEntityName}";
@@ -132,6 +143,13 @@ namespace Pdbc.Cli.App.Roslyn
 
             return result;
         }
+
+        public string GetNamespaceForCoreCqrsTestDataBuilders(string entityName)
+        {
+            var result = $"{Configuration.RootNamespace}.Tests.Helpers.CQRS.{entityName}";
+
+            return result;
+        }
         #endregion
 
         // TODO this should go into FileHelperService ???
@@ -145,6 +163,7 @@ namespace Pdbc.Cli.App.Roslyn
 
         public List<ClassDeclarationSyntax> Classes { get; set; }
         public List<InterfaceDeclarationSyntax> Interfaces { get; set; }
+
 
 
     }

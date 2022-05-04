@@ -19,27 +19,16 @@ namespace Pdbc.Cli.App.Roslyn.Extensions
 
             return null;
         }
+        //public static MethodDeclarationSyntax FindMethodDeclarationSyntaxFor(this TypeDeclarationSyntax typeSyntax, string name)
+        //{
+        //    foreach (var method in typeSyntax.Members.OfType<MethodDeclarationSyntax>())
+        //    {
+        //        if (method.Identifier.ValueText == name)
+        //            return method;
+        //    }
 
-        public static PropertyDeclarationSyntax FindPropertyDeclarationSyntaxFor(this TypeDeclarationSyntax typeSyntax, string name)
-        {
-            foreach (var property in typeSyntax.Members.OfType<PropertyDeclarationSyntax>())
-            {
-                if (property.Identifier.ValueText == name)
-                    return property;
-            }
-
-            return null;
-        }
-        public static MethodDeclarationSyntax FindMethodDeclarationSyntaxFor(this TypeDeclarationSyntax typeSyntax, string name)
-        {
-            foreach (var method in typeSyntax.Members.OfType<MethodDeclarationSyntax>())
-            {
-                if (method.Identifier.ValueText == name)
-                    return method;
-            }
-
-            return null;
-        }
+        //    return null;
+        //}
         public static ConstructorDeclarationSyntax FindConstructorDeclarationSyntax(this TypeDeclarationSyntax typeSyntax)
         {
             foreach (var method in typeSyntax.Members.OfType<ConstructorDeclarationSyntax>())
@@ -51,5 +40,12 @@ namespace Pdbc.Cli.App.Roslyn.Extensions
 
             return null;
         }
+
+        public static TypeDeclarationSyntax AddAndKeep(this TypeDeclarationSyntax syntax, MemberDeclarationSyntax memberDeclarationSyntax) 
+        {
+            var members = syntax.Members.Add(memberDeclarationSyntax);
+            return syntax.WithMembers(members);
+        }
+
     }
 }

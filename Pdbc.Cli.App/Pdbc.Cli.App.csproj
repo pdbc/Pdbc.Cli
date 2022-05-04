@@ -8,8 +8,11 @@
 
   <ItemGroup>
     <Compile Remove="Legacy\**" />
+    <Compile Remove="Roslyn\Legacy\**" />
     <EmbeddedResource Remove="Legacy\**" />
+    <EmbeddedResource Remove="Roslyn\Legacy\**" />
     <None Remove="Legacy\**" />
+    <None Remove="Roslyn\Legacy\**" />
   </ItemGroup>
 
   <ItemGroup>
