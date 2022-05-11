@@ -96,6 +96,17 @@ namespace Pdbc.Cli.App.Extensions
             return entity;
         }
 
+        public static InterfaceDeclarationSyntax AddMethodToInterfaceIfNotExists(this InterfaceDeclarationSyntax entity, MethodDeclarationSyntaxBuilder methodBuilder)
+        {
+            var identifier = methodBuilder.GetIdentifier();
+            if (!entity.IsMethodDefined(identifier))
+            {
+                entity = entity.AppendMember<InterfaceDeclarationSyntax>(methodBuilder.Build());
+            }
+
+            return entity;
+        }
+
         public static bool IsConstructorDefined(this TypeDeclarationSyntax typeSyntax, string name)
         {
             var property = typeSyntax.FindConstructorDeclarationSyntaxFor(name);

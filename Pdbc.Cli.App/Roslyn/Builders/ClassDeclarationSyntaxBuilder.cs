@@ -37,7 +37,8 @@ namespace Pdbc.Cli.App.Roslyn.Builders
         {
             "System",
             "System.Linq",
-            "System.Threading"
+            "System.Threading",
+            "System.Threading.Tasks"
         };
 
         public ClassDeclarationSyntaxBuilder AddUsingStatement(string statement)
@@ -57,7 +58,11 @@ namespace Pdbc.Cli.App.Roslyn.Builders
             AddUsingStatement("Aertssen.Framework.Infra.CQRS.Base");
             return this;
         }
-
+        public ClassDeclarationSyntaxBuilder AddUsingAertssenFrameworkCqrsServices()
+        {
+            AddUsingStatement("Aertssen.Framework.Services.Cqrs.Base");
+            return this;
+        }
         public ClassDeclarationSyntaxBuilder AddUsingAertssenFrameworkServices()
         {
             AddUsingStatement("Aertssen.Framework.Infra.Services");
@@ -123,6 +128,15 @@ namespace Pdbc.Cli.App.Roslyn.Builders
             _isTestFixture = isTestFixture;
             return this;
         }
+        private bool _requiresHttpMethodAttribute;
+        private String _route;
+        public ClassDeclarationSyntaxBuilder AddHttpMethodAttribute(string route)
+        {
+            _requiresHttpMethodAttribute = true;
+            //[HttpAction("odata/assets", httpMethod: Method.Get)]
+            _route = route;
+            return this;
+        }
 
         public ClassDeclarationSyntax Build()
         {
@@ -140,7 +154,11 @@ namespace Pdbc.Cli.App.Roslyn.Builders
             {
                 classDeclaration = classDeclaration.AddAttribute("TestFixture");
             }
-
+            if (_requiresHttpMethodAttribute)
+            {
+                var httpMethoAttribute = $"HttpAction(\"{_route}\", Method.Get)";
+                classDeclaration = classDeclaration.AddAttribute(httpMethoAttribute);
+            }
             // Add class to namespace
             namespaceDeclaration = namespaceDeclaration.AddMembers(classDeclaration);
 

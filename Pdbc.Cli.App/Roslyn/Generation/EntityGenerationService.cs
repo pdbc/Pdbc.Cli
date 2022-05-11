@@ -68,7 +68,6 @@ namespace Pdbc.Cli.App.Roslyn.Generation
 
             entity = await Save(entity, new MethodDeclarationSyntaxBuilder().WithName("GetAuditProperties").WithReturnType("IAuditProperties")
                     .IsOverride(true)
-
                     .AddStatement(new StatementSyntaxBuilder()
                         .AddStatement(@"
                                 return new AuditProperties()
@@ -108,7 +107,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 .WithName(className)
                 .ForNamespace(entityNamespace)
                 .AddUsingStatement("System")
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForDomainModel())
+                .AddUsingStatement(_generationContext.GetNamespaceForDomainModel())
                 .AddUsingAertssenFrameworkAuditModel()
                 .AddUnitTestUsingStatement()
                 .AddBaseClass($"BaseSpecification")
@@ -146,7 +145,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 .WithName(className)
                 .ForNamespace(entityNamespace)
                 .AddUsingStatement("System")
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForDomainModel())
+                .AddUsingStatement(_generationContext.GetNamespaceForDomainModel())
                 .AddAertssenFrameworkCoreUsingStatements()
                 .AddUnitTestUsingStatement()
                 .AddBaseClass(_generationContext.EntityName.ToBuilder())

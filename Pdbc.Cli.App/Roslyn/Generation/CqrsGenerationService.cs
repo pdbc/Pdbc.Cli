@@ -6,6 +6,7 @@ using Pdbc.Cli.App.Context;
 using Pdbc.Cli.App.Extensions;
 using Pdbc.Cli.App.Model.Items;
 using Pdbc.Cli.App.Roslyn.Builders;
+using Pdbc.Cli.App.Roslyn.Builders.SyntaxBuilders;
 using Pdbc.Cli.App.Roslyn.Extensions;
 using Pdbc.Cli.App.Services;
 
@@ -25,7 +26,11 @@ namespace Pdbc.Cli.App.Roslyn.Generation
             await GenerateCqrsInputClass();
             await GenerateCqrsInputClassTestDataBuilder();
 
-            await GenerateCqrsOutputClass();
+            // TODO quick action here?
+            if (!_generationContext.IsListAction)
+            {
+                await GenerateCqrsOutputClass();
+            }
             
             await GenerateCqrsHandlerClass();
             await GenerateCqrsHandlerUnitTestClass();
@@ -33,13 +38,13 @@ namespace Pdbc.Cli.App.Roslyn.Generation
             await GenerateCqrsValidatorClass();
             await GenerateCqrsValidatorUnitTestClass();
 
-            if (_generationContext.RequiresFactory())
+            if (_generationContext.RequiresFactory)
             {
                 await GenerateCqrsFactoryClass();
                 await GenerateCqrsFactoryUnitTestClass();
             }
 
-            if (_generationContext.RequiresChangesHandler())
+            if (_generationContext.RequiresChangesHandler)
             {
                 await GenerateCqrsChangesHandlerClass();
                 await GenerateCqrsChangesHandlerUnitTestClass();
@@ -68,8 +73,8 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 .WithName(className)
                 .ForNamespace(entityNamespace)
                 .AddUsingStatement("System")
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForDomainModel())
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForCoreCqrs(_generationContext.PluralEntityName, _generationContext.ActionName))
+                .AddUsingStatement(_generationContext.GetNamespaceForDomainModel())
+                .AddUsingStatement(_generationContext.GetNamespaceForCoreCqrs())
                 .AddAertssenFrameworkCoreUsingStatements()
                 .AddUnitTestUsingStatement()
                 .AddBaseClass($"{_generationContext.CqrsInputClassName.ToBuilder()}")
@@ -107,8 +112,8 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 entity = new ClassDeclarationSyntaxBuilder()
                     .WithName(className)
                     .ForNamespace(entityNamespace)
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForDomainModel())
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForDto(_generationContext.PluralEntityName))
+                    .AddUsingStatement(_generationContext.GetNamespaceForDomainModel())
+                    .AddUsingStatement(_generationContext.GetNamespaceForDto())
                     .AddUsingAertssenFrameworkCqrsInfra()
                     .AddBaseClass($"I{_generationContext.CqrsInputType}<{_generationContext.GetCqrsOutputClassNameBasedOnAction()}>")
                     .Build();
@@ -116,9 +121,14 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 await _fileHelperService.WriteFile(fullFilename, entity);
             }
 
-            if (_generationContext.RequiresActionDto())
+            if (_generationContext.RequiresActionDto)
             {
                 entity = await Save(entity, new PropertyDeclarationSyntaxBuilder().WithName(_generationContext.EntityName).ForType(_generationContext.ActionDtoInterface), fullFilename);
+            }
+
+            if (_generationContext.IsGetAction)
+            {
+                entity = await Save(entity, new PropertyDeclarationSyntaxBuilder().WithName("Id").ForType("long"), fullFilename);
             }
         }
 
@@ -139,7 +149,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 entity = new ClassDeclarationSyntaxBuilder()
                     .WithName(className)
                     .ForNamespace(entityNamespace)
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForDto(_generationContext.PluralEntityName))
+                    .AddUsingStatement(_generationContext.GetNamespaceForDto())
                     .AddUsingAertssenFrameworkCqrsInfra()
                     .Build();
 
@@ -147,7 +157,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation
 
             }
 
-            if (_generationContext.RequiresDataDto())
+            if (_generationContext.RequiresDataDto)
             {
                 entity = await Save(entity, new PropertyDeclarationSyntaxBuilder().WithName(_generationContext.EntityName).ForType(_generationContext.DataDtoInterface), fullFilename);
             }
@@ -177,10 +187,10 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                     .AddUsingStatement("AutoMapper")
                     .AddUsingStatement("MediatR")
                     .AddUsingAertssenFrameworkCqrsInfra()
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForDomainModel())
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForData())
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForDataRepositories())
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForDto(_generationContext.PluralEntityName))
+                    .AddUsingStatement(_generationContext.GetNamespaceForDomainModel())
+                    .AddUsingStatement(_generationContext.GetNamespaceForData())
+                    .AddUsingStatement(_generationContext.GetNamespaceForDataRepositories())
+                    .AddUsingStatement(_generationContext.GetNamespaceForDto())
                     .AddUsingAertssenFrameworkCqrsInfra()
                     .AddUsingAertssenFrameworkServices()
                     .AddBaseClass($"IRequestHandler<{_generationContext.CqrsInputClassName}, {outputCqrsOutputClassName}>")
@@ -191,7 +201,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation
 
 
             // List Query Handler
-            if (_generationContext.IsListAction()) 
+            if (_generationContext.IsListAction) 
             {
 
                 //var items = _assetRepository.GetAll();
@@ -205,8 +215,8 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 entity = await Save(entity, new ConstructorDeclarationSyntaxBuilder().WithName(className)
                         .AddParameter(_generationContext.EntityName.ToRepositoryInterface(), "repository")
                         .AddParameter("IProjectionService", "projectionService")
-                        .AddStatement(new AssignmentSyntaxBuilder().WithVariableName("_repository").WithParameterName("repository"))
-                        .AddStatement(new AssignmentSyntaxBuilder().WithVariableName("_projectionService").WithParameterName("projectionService"))
+                        .AddStatement(new AssignmentSyntaxBuilder("_repository", "repository"))
+                        .AddStatement(new AssignmentSyntaxBuilder("_projectionService", "projectionService"))
                         ,
                     fullFilename);
 
@@ -217,12 +227,38 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                         .WithReturnType($"Task<{outputCqrsOutputClassName}>")
                         .AddParameter(_generationContext.CqrsInputClassName, "request")
                         .AddParameter("CancellationToken", "cancellationToken")
-                        .AddStatement(new AssignmentSyntaxBuilder().WithVariableName("var items").WithParameterName($"_repository.GetAll()"))
-                        .AddStatement(new AssignmentSyntaxBuilder().WithVariableName("var mappedItems").WithParameterName($"_projectionService.Project<{_generationContext.EntityName},{_generationContext.DataDtoClass}>(items)"))
+                        .AddStatement(new AssignmentSyntaxBuilder("var items", $"_repository.GetAll()"))
+                        .AddStatement(new AssignmentSyntaxBuilder("var mappedItems", $"_projectionService.Project<{_generationContext.EntityName},{_generationContext.DataDtoClass}>(items)"))
                         .AddStatement(new ReturnStatementSyntaxBuilder().WithName("mappedItems")),
                     fullFilename);
 
 
+            }
+            else if (_generationContext.IsGetAction)
+            {
+                entity = await Save(entity, new VariableDeclarationSyntaxBuilder().WithName("_repository").ForType(_generationContext.EntityName.ToRepositoryInterface()), fullFilename);
+                entity = await Save(entity, new VariableDeclarationSyntaxBuilder().WithName("_mapper").ForType("IMapper"), fullFilename);
+
+                entity = await Save(entity, new ConstructorDeclarationSyntaxBuilder().WithName(className)
+                        .AddParameter(_generationContext.EntityName.ToRepositoryInterface(), "repository")
+                        .AddParameter("IMapper", "mapper")
+                        .AddStatement(new AssignmentSyntaxBuilder("_repository", "repository"))
+                        .AddStatement(new AssignmentSyntaxBuilder("_mapper", "mapper"))
+                    ,
+                    fullFilename);
+
+                entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName("Handle")
+                        .Async()
+                        .WithReturnType($"Task<{outputCqrsOutputClassName}>")
+                        .AddParameter(_generationContext.CqrsInputClassName, "request")
+                        .AddParameter("CancellationToken", "cancellationToken")
+                        .AddStatement(new AssignmentSyntaxBuilder("var item", $"_repository.GetByIdAsync(request.Id)"))
+                        .AddStatement(new AssignmentSyntaxBuilder("var mappedItem", $"_mapper.Map<{_generationContext.DataDtoClass}>(item)"))
+                        //.AddStatement(new ReturnStatementSyntaxBuilder().WithName($"new {_generationContext.CqrsOutputClassName}()"+"{"+$"{_generationContext.EntityName} = mappedItem"+"}")),
+                        .AddStatement(new ReturnStatementSyntaxBuilder().WithObjectCreationExpression(new ObjectCreationExpressionSyntaxBuilder($"{_generationContext.CqrsOutputClassName}").AddAssignementStatement($"{_generationContext.EntityName}", "mappedItem"))),
+                    //TODO Add Result here...
+                    fullFilename);
             }
             else
             {
@@ -236,32 +272,182 @@ namespace Pdbc.Cli.App.Roslyn.Generation
             }
 
 
-            // Variable declarations
-            //entity = await _roslynGenerator.AppendClassVariable(fullFilename, entity,
-            //    new PropertyItem($"IFactory<{_generationContext.ActionDtoInterface}, {_generationContext.EntityName}>", "_factory"));
-            //entity = await _roslynGenerator.AppendClassVariable(fullFilename, entity,
-            //    new PropertyItem($"IChangesHandler<{_generationContext.ActionDtoInterface}, {_generationContext.EntityName}>", "_changesHandler"));
-            //entity = await _roslynGenerator.AppendClassVariable(fullFilename, entity,
-            //    new PropertyItem($"{_generationContext.EntityName.ToRepositoryInterface()}", "_repository"));
 
-
-            // Constructor
-            //public Task<AddressStoreResult> Handle(AddressStoreCommand request, CancellationToken cancellationToken)
-            //{
-            //    throw new NotImplementedException();
-            //}
-
-
-            // Handle Method
-            //entity = await _roslynGenerator.AppendPublicMethodNotImplemented(fullFilename, entity, new MethodItem($"", "Handle"),
-            //    new List<PropertyItem>()
-            //    {
-            //        new PropertyItem(_generationContext.CqrsInputClassName, "request"),
-            //        new PropertyItem("CancellationToken", "cancellationToken")
-            //    });
-
-            //entity = await _roslynGenerator.AppendCqrsHandlerStoreMethod(fullFilename, entity, _generationContext.StandardActionInfo);
         }
+
+        public async Task GenerateCqrsHandlerUnitTestClass()
+        {
+            var className = _generationContext.CqrsHandlerClassName.ToSpecification();
+            var subfolders = GetSubFoldersForUnitTest();
+
+            var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("UnitTests");
+            var fullFilename = roslynProjectContext.GetFullTestsFilenameFor(className, subfolders);
+
+            var entity = await roslynProjectContext.GetClassByName(className);
+            if (entity != null)
+            {
+                return;
+            }
+
+            var entityNamespace = roslynProjectContext.GetNamespace(subfolders);
+
+            entity = new ClassDeclarationSyntaxBuilder()
+                .WithName(className)
+                .ForNamespace(entityNamespace)
+                .AddUsingAertssenFrameworkCqrsInfra()
+                .AddUsingAertssenFrameworkValidationInfra()
+                .AddUsingStatement("System.Collections.Generic")
+                .AddUnitTestUsingStatement()
+                .AddUsingAertssenFrameworkAuditModel()
+                .AddUsingStatement(_generationContext.GetNamespaceForDomainModel())
+                .AddUsingStatement(_generationContext.GetNamespaceForCoreCqrs())
+                .AddUsingStatement(_generationContext.GetNamespaceForDto())
+                .AddUsingStatement(_generationContext.GetNamespaceForDataRepositories())
+                .AddUsingStatement(_generationContext.GetNamespaceForCoreCqrsTestDataBuilders())
+                .AddUsingStatement("AutoMapper")
+                .AddUsingAertssenFrameworkCqrsInfra()
+                .AddUsingAertssenFrameworkServices()
+                .AddTestFixtureAttribute(true)
+                .AddBaseClass($"{_generationContext.CqrsHandlerClassName.ToContextSpecification()}")
+                .Build();
+
+
+            if (_generationContext.IsListAction)
+            {
+                entity = await Save(entity, new PropertyDeclarationSyntaxBuilder()
+                    .WithModifier(SyntaxKind.ProtectedKeyword)
+                    .WithName("Query")
+                    .ForType(_generationContext.CqrsInputClassName), fullFilename);
+                entity = await Save(entity, new PropertyDeclarationSyntaxBuilder()
+                    .WithModifier(SyntaxKind.ProtectedKeyword)
+                    .WithName("CancellationToken")
+                    .ForType("CancellationToken"), fullFilename);
+                entity = await Save(entity, new PropertyDeclarationSyntaxBuilder()
+                    .WithModifier(SyntaxKind.ProtectedKeyword)
+                    .WithName("Items")
+                    .ForType($"IQueryable<{_generationContext.EntityName}>"), fullFilename);
+                entity = await Save(entity, new PropertyDeclarationSyntaxBuilder()
+                    .WithModifier(SyntaxKind.ProtectedKeyword)
+                    .WithName("Repository")
+                    .ForType($"{_generationContext.EntityName.ToRepositoryInterface()}")
+                    .WithDependencyType(_generationContext.EntityName.ToRepositoryInterface()), fullFilename);
+                entity = await Save(entity, new PropertyDeclarationSyntaxBuilder()
+                    .WithModifier(SyntaxKind.ProtectedKeyword)
+                    .WithName("ProjectionService")
+                    .ForType($"IProjectionService")
+                    .WithDependencyType("IProjectionService"), fullFilename);
+
+
+
+                entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName("Establish_context")
+                        .IsOverride(true)
+                        .WithModifier(SyntaxKind.ProtectedKeyword)
+                        .AddStatement(new StatementSyntaxBuilder().AddStatement("base.Establish_context();"))
+                        .AddStatement(new AssignmentSyntaxBuilder("Query", $"new {_generationContext.CqrsInputClassName.ToTestDataBuilder()}().Build()"))
+                        .AddStatement(new AssignmentSyntaxBuilder("CancellationToken", $"new CancellationToken()"))
+                        .AddStatement(new AssignmentSyntaxBuilder("Items", $"new List<{_generationContext.EntityName}>().AsQueryable()"))
+                        .AddStatement(new StatementSyntaxBuilder().AddStatement($"Repository.Stub(x => x.GetAll()).Returns(Items);")),
+                    fullFilename);
+
+                entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName("Because")
+                        .IsOverride(true)
+                        .WithModifier(SyntaxKind.ProtectedKeyword)
+                        .AddStatement(new StatementSyntaxBuilder().AddStatement("SUT.Handle(Query, CancellationToken).GetAwaiter().GetResult();"))
+                        ,
+                    fullFilename);
+
+                entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName("Verify_repository_called_to_load_items")
+                        .WithModifier(SyntaxKind.PublicKeyword)
+                        .AddTestAttribute(true)
+                        .AddStatement(new StatementSyntaxBuilder().AddStatement("Repository.AssertWasCalled(x => x.GetAll());"))
+                    ,
+                    fullFilename);
+
+                entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName("Verify_projection_service_called_to_map_data_to_dto_result")
+                        .WithModifier(SyntaxKind.PublicKeyword)
+                        .AddTestAttribute(true)
+                        .AddStatement(new StatementSyntaxBuilder().AddStatement($"ProjectionService.AssertWasCalled(x => x.Project<{_generationContext.EntityName}, {_generationContext.DataDtoClass}>(Items));"))
+                    ,
+                    fullFilename);
+
+            }
+            else if (_generationContext.IsGetAction)
+            {
+                entity = await Save(entity, new PropertyDeclarationSyntaxBuilder()
+                    .WithModifier(SyntaxKind.ProtectedKeyword)
+                    .WithName("Query")
+                    .ForType(_generationContext.CqrsInputClassName), fullFilename);
+                entity = await Save(entity, new PropertyDeclarationSyntaxBuilder()
+                    .WithModifier(SyntaxKind.ProtectedKeyword)
+                    .WithName("CancellationToken")
+                    .ForType("CancellationToken"), fullFilename);
+                entity = await Save(entity, new PropertyDeclarationSyntaxBuilder()
+                    .WithModifier(SyntaxKind.ProtectedKeyword)
+                    .WithName("Item")
+                    .ForType($"{_generationContext.EntityName}"), fullFilename);
+                entity = await Save(entity, new PropertyDeclarationSyntaxBuilder()
+                    .WithModifier(SyntaxKind.ProtectedKeyword)
+                    .WithName("Repository")
+                    .ForType($"{_generationContext.EntityName.ToRepositoryInterface()}")
+                    .WithDependencyType(_generationContext.EntityName.ToRepositoryInterface()), fullFilename);
+                entity = await Save(entity, new PropertyDeclarationSyntaxBuilder()
+                    .WithModifier(SyntaxKind.ProtectedKeyword)
+                    .WithName("Mapper")
+                    .ForType($"IMapper")
+                    .WithDependencyType("IMapper"), fullFilename);
+
+
+
+                entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName("Establish_context")
+                        .IsOverride(true)
+                        .WithModifier(SyntaxKind.ProtectedKeyword)
+                        .AddStatement(new StatementSyntaxBuilder().AddStatement("base.Establish_context();"))
+                        .AddStatement(new AssignmentSyntaxBuilder("Query", $"new {_generationContext.CqrsInputClassName.ToTestDataBuilder()}().Build()"))
+                        .AddStatement(new AssignmentSyntaxBuilder("CancellationToken", $"new CancellationToken()"))
+                        .AddStatement(new AssignmentSyntaxBuilder("Item", $"new {_generationContext.EntityName.ToTestDataBuilder()}().Build()"))
+                        .AddStatement(new StatementSyntaxBuilder().AddStatement($"Repository.Stub(x => x.GetByIdAsync(Query.Id)).ReturnsAsync(Item);")),
+                    fullFilename);
+
+                entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName("Because")
+                        .IsOverride(true)
+                        .WithModifier(SyntaxKind.ProtectedKeyword)
+                        .AddStatement(new StatementSyntaxBuilder().AddStatement("SUT.Handle(Query, CancellationToken).GetAwaiter().GetResult();"))
+                        ,
+                    fullFilename);
+
+                entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName("Verify_repository_called_to_load_item")
+                        .WithModifier(SyntaxKind.PublicKeyword)
+                        .AddTestAttribute(true)
+                        .AddStatement(new StatementSyntaxBuilder().AddStatement("Repository.AssertWasCalled(x => x.GetByIdAsync(Query.Id));"))
+                    ,
+                    fullFilename);
+
+                entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName("Verify_mapper_called_to_map_data_to_dto_result")
+                        .WithModifier(SyntaxKind.PublicKeyword)
+                        .AddTestAttribute(true)
+                        .AddStatement(new StatementSyntaxBuilder().AddStatement($"Mapper.AssertWasCalled(x => x.Map<{_generationContext.DataDtoClass}>(Item));"))
+                    ,
+                    fullFilename);
+
+            } else 
+            {
+
+                entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName("Verify_handler_executed")
+                        .AddTestAttribute(true)
+                        .ThrowsNewNotImplementedException(),
+                    fullFilename);
+            }
+        }
+
 
         public async Task GenerateCqrsValidatorClass()
         {
@@ -281,7 +467,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                     .ForNamespace(entityNamespace)
                     .AddUsingStatement("FluentValidation")
                     .AddUsingAertssenFrameworkValidationInfra()
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForDto(_generationContext.PluralEntityName))
+                    .AddUsingStatement(_generationContext.GetNamespaceForDto())
                     .AddUsingAertssenFrameworkCqrsInfra()
                     .AddBaseClass($"FluentValidationValidator<{_generationContext.CqrsInputClassName}>")
                     .Build();
@@ -307,8 +493,8 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                     .WithName(className)
                     .ForNamespace(entityNamespace)
                     .AddUsingAertssenFrameworkCqrsInfra()
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForDomainModel())
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForDto(_generationContext.PluralEntityName))
+                    .AddUsingStatement(_generationContext.GetNamespaceForDomainModel())
+                    .AddUsingStatement(_generationContext.GetNamespaceForDto())
                     .AddUsingAertssenFrameworkCqrsInfra()
                     .AddBaseClass($"IFactory<{_generationContext.ActionDtoInterface},{_generationContext.EntityName}>")
                     .Build();
@@ -341,8 +527,8 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                     .AddUsingAertssenFrameworkCqrsInfra()
                     .AddUsingAertssenFrameworkValidationInfra()
                     .AddUsingStatement("FluentValidation")
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForDomainModel())
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForDto(_generationContext.PluralEntityName))
+                    .AddUsingStatement(_generationContext.GetNamespaceForDomainModel())
+                    .AddUsingStatement(_generationContext.GetNamespaceForDto())
                     .AddUsingAertssenFrameworkCqrsInfra()
                     .AddBaseClass($"IChangesHandler<{_generationContext.ActionDtoInterface},{_generationContext.EntityName}>")
                     .Build();
@@ -357,130 +543,13 @@ namespace Pdbc.Cli.App.Roslyn.Generation
         }
 
 
+
         private string[] GetSubFoldersForUnitTest()
         {
             return new[] { "Core", "CQRS", _generationContext.PluralEntityName, _generationContext.ActionName };
         }
 
-        public async Task GenerateCqrsHandlerUnitTestClass()
-        {
-            var className = _generationContext.CqrsHandlerClassName.ToSpecification();
-            var subfolders = GetSubFoldersForUnitTest();
 
-            var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("UnitTests");
-            var fullFilename = roslynProjectContext.GetFullTestsFilenameFor(className, subfolders);
-
-            var entity = await roslynProjectContext.GetClassByName(className);
-            if (entity != null)
-            {
-                return;
-            }
-
-            var entityNamespace = roslynProjectContext.GetNamespace(subfolders);
-
-            entity = new ClassDeclarationSyntaxBuilder()
-                .WithName(className)
-                .ForNamespace(entityNamespace)
-                .AddUsingAertssenFrameworkCqrsInfra()
-                .AddUsingAertssenFrameworkValidationInfra()
-                .AddUsingStatement("System.Collections.Generic")
-                .AddUnitTestUsingStatement()
-                .AddUsingAertssenFrameworkAuditModel()
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForDomainModel())
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForCoreCqrs(_generationContext.PluralEntityName, _generationContext.ActionName))
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForDto(_generationContext.PluralEntityName))
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForDataRepositories())
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForCoreCqrsTestDataBuilders(_generationContext.PluralEntityName))
-                .AddUsingAertssenFrameworkCqrsInfra()
-                .AddUsingAertssenFrameworkServices()
-                .AddTestFixtureAttribute(true)
-                .AddBaseClass($"{_generationContext.CqrsHandlerClassName.ToContextSpecification()}")
-                .Build();
-
-
-            if (_generationContext.IsListAction())
-            {
-                entity = await Save(entity, new PropertyDeclarationSyntaxBuilder()
-                    .WithModifier(SyntaxKind.ProtectedKeyword)
-                    .WithName("Query")
-                    .ForType(_generationContext.CqrsInputClassName), fullFilename);
-                entity = await Save(entity, new PropertyDeclarationSyntaxBuilder()
-                    .WithModifier(SyntaxKind.ProtectedKeyword)
-                    .WithName("CancellationToken")
-                    .ForType("CancellationToken"), fullFilename);
-                entity = await Save(entity, new PropertyDeclarationSyntaxBuilder()
-                    .WithModifier(SyntaxKind.ProtectedKeyword)
-                    .WithName("Items")
-                    .ForType($"IQueryable<{_generationContext.EntityName}>"), fullFilename);
-                entity = await Save(entity, new PropertyDeclarationSyntaxBuilder()
-                    .WithModifier(SyntaxKind.ProtectedKeyword)
-                    .WithName("Repository")
-                    .ForType($"{_generationContext.EntityName.ToRepositoryInterface()}")
-                    .WithDependencyType(_generationContext.EntityName.ToRepositoryInterface()), fullFilename);
-                entity = await Save(entity, new PropertyDeclarationSyntaxBuilder()
-                    .WithModifier(SyntaxKind.ProtectedKeyword)
-                    .WithName("ProjectionService")
-                    .ForType($"IProjectionService")
-                    .WithDependencyType("IProjectionService"), fullFilename);
-
-
-
-                entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
-                        .WithName("Establish_context")
-                        .IsOverride(true)
-                        .WithModifier(SyntaxKind.ProtectedKeyword)
-                        .AddStatement(new StatementSyntaxBuilder().AddStatement("base.Establish_context();"))
-                        .AddStatement(new AssignmentSyntaxBuilder().WithVariableName("Query").WithParameterName($"new {_generationContext.CqrsInputClassName.ToTestDataBuilder()}().Build()"))
-                        .AddStatement(new AssignmentSyntaxBuilder().WithVariableName("CancellationToken").WithParameterName($"new CancellationToken()"))
-                        .AddStatement(new AssignmentSyntaxBuilder().WithVariableName("Items").WithParameterName($"new List<{_generationContext.EntityName}>().AsQueryable()"))
-                        .AddStatement(new StatementSyntaxBuilder().AddStatement($"Repository.Stub(x => x.GetAll()).Returns(Items);")),
-                    fullFilename);
-
-                entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
-                        .WithName("Because")
-                        .IsOverride(true)
-                        .WithModifier(SyntaxKind.ProtectedKeyword)
-                        .AddStatement(new StatementSyntaxBuilder().AddStatement("SUT.Handle(Query, CancellationToken).GetAwaiter().GetResult();"))
-                        ,
-                    fullFilename);
-
-                entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
-                        .WithName("Verify_repository_called_to_load_items")
-                        .WithModifier(SyntaxKind.PublicKeyword)
-                        .AddTestAttribute(true)
-                        .AddStatement(new StatementSyntaxBuilder().AddStatement("Repository.AssertWasCalled(x => x.GetAll());"))
-                    ,
-                    fullFilename);
-
-                entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
-                        .WithName("Verify_projection_service_called_to_map_data_to_dto_result")
-                        .WithModifier(SyntaxKind.PublicKeyword)
-                        .AddTestAttribute(true)
-                        .AddStatement(new StatementSyntaxBuilder().AddStatement($"ProjectionService.AssertWasCalled(x => x.Project<{_generationContext.EntityName}, {_generationContext.DataDtoClass}>(Items));"))
-                    ,
-                    fullFilename);
-                //[Test]
-                //public void Verify_repository_called_to_load_assets()
-                //{
-                //    Repository.AssertWasCalled(x => x.GetAll());
-                //}
-
-                //[Test]
-                //public void Verify_projection_service_called_to_load_data_in_database()
-                //{
-                //    ProjectionService.AssertWasCalled(x => x.Project<Asset, AssetDataDto>(_items));
-                //}
-            }
-            else
-            {
-
-                entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
-                        .WithName("Verify_handler_executed")
-                        .AddTestAttribute(true)
-                        .ThrowsNewNotImplementedException(),
-                    fullFilename);
-            }
-        }
 
         public async Task GenerateCqrsValidatorUnitTestClass()
         {
@@ -506,9 +575,9 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 .AddUsingStatement("System.Collections.Generic")
                 .AddUnitTestUsingStatement()
                 .AddUsingAertssenFrameworkAuditModel()
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForDomainModel())
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForCoreCqrs(_generationContext.PluralEntityName, _generationContext.ActionName))
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForDto(_generationContext.PluralEntityName))
+                .AddUsingStatement(_generationContext.GetNamespaceForDomainModel())
+                .AddUsingStatement(_generationContext.GetNamespaceForCoreCqrs())
+                .AddUsingStatement(_generationContext.GetNamespaceForDto())
                 .AddUsingAertssenFrameworkCqrsInfra()
                 .AddTestFixtureAttribute(true)
                 .AddBaseClass($"{_generationContext.CqrsValidatorClassName.ToContextSpecification()}")
@@ -547,9 +616,9 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 .AddUsingStatement("System.Collections.Generic")
                 .AddUnitTestUsingStatement()
                 .AddUsingAertssenFrameworkAuditModel()
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForDomainModel())
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForCoreCqrs(_generationContext.PluralEntityName, _generationContext.ActionName))
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForDto(_generationContext.PluralEntityName))
+                .AddUsingStatement(_generationContext.GetNamespaceForDomainModel())
+                .AddUsingStatement(_generationContext.GetNamespaceForCoreCqrs())
+                .AddUsingStatement(_generationContext.GetNamespaceForDto())
                 .AddUsingAertssenFrameworkCqrsInfra()
                 .AddTestFixtureAttribute(true)
                 .AddBaseClass($"{_generationContext.CqrsFactoryClassName.ToContextSpecification()}>")
@@ -589,9 +658,9 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 .AddUsingStatement("System.Collections.Generic")
                 .AddUnitTestUsingStatement()
                 .AddUsingAertssenFrameworkAuditModel()
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForDomainModel())
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForCoreCqrs(_generationContext.PluralEntityName, _generationContext.ActionName))
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForDto(_generationContext.PluralEntityName))
+                .AddUsingStatement(_generationContext.GetNamespaceForDomainModel())
+                .AddUsingStatement(_generationContext.GetNamespaceForCoreCqrs())
+                .AddUsingStatement(_generationContext.GetNamespaceForDto())
                 .AddUsingAertssenFrameworkCqrsInfra()
                 .AddTestFixtureAttribute(true)
                 .AddBaseClass($"{_generationContext.CqrsChangesHandlerClassName.ToContextSpecification()}>")

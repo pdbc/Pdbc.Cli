@@ -39,6 +39,12 @@ namespace Pdbc.Cli.App.Roslyn.Builders
             return this;
         }
 
+        private bool _isInterfaceMethod;
+        public MethodDeclarationSyntaxBuilder IsInterfaceMethod(bool isInterfaceMethod)
+        {
+            _isInterfaceMethod = isInterfaceMethod;
+            return this;
+        }
 
         private bool _isAbstract;
         public MethodDeclarationSyntaxBuilder IsAbstract(bool isAbstract)
@@ -107,7 +113,7 @@ namespace Pdbc.Cli.App.Roslyn.Builders
                 method = method.AddAttribute("Test");
             }
 
-            if (_isAbstract)
+            if (_isAbstract || _isInterfaceMethod)
             {
                 method =  method.WithSemicolonToken(Token(SyntaxKind.SemicolonToken));
                 return method;

@@ -48,7 +48,13 @@ namespace Pdbc.Cli.App.Roslyn.Generation
             var updatedEntity = entity.AddMethodToClassIfNotExists(method);
             return await SaveAndUpdate(entity, updatedEntity, filename);
         }
-
+        public async Task<InterfaceDeclarationSyntax> Save(InterfaceDeclarationSyntax entity,
+            MethodDeclarationSyntaxBuilder method,
+            String filename)
+        {
+            var updatedEntity = entity.AddMethodToInterfaceIfNotExists(method);
+            return await SaveAndUpdate(entity, updatedEntity, filename);
+        }
         public async Task<ClassDeclarationSyntax> Save(ClassDeclarationSyntax entity,
             ConstructorDeclarationSyntaxBuilder constructor,
             String filename)
@@ -74,6 +80,22 @@ namespace Pdbc.Cli.App.Roslyn.Generation
             return updatedCompilationSyntax.GetClassDeclarationSyntaxFrom();
         }
 
+        protected async Task<InterfaceDeclarationSyntax> SaveAndUpdate(InterfaceDeclarationSyntax original,
+            InterfaceDeclarationSyntax updated,
+            string filename)
+        {
+            var originalNamespace = original.GetParentNodeOfType<NamespaceDeclarationSyntax>();
+            var originalCompilationSyntax = originalNamespace.GetParentNodeOfType<CompilationUnitSyntax>();
+
+
+            var updatedNamespace = originalNamespace.ReplaceNode(original, updated);
+            var updatedCompilationSyntax = originalCompilationSyntax.ReplaceNode(originalNamespace, updatedNamespace);
+
+            var code = updatedCompilationSyntax.NormalizeWhitespace().ToFullString();
+            await _fileHelperService.WriteFile(filename, code);
+
+            return updatedCompilationSyntax.GetInterfaceDeclarationSyntaxFrom();
+        }
         //NamespaceDeclarationSyntax @namespace = classDeclarationSyntax.GetParentNodeOfType<NamespaceDeclarationSyntax>();
         //    if (@namespace != null)
         //{

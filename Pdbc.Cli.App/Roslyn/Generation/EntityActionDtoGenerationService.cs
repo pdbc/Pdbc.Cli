@@ -42,7 +42,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 entity = new ClassDeclarationSyntaxBuilder()
                     .WithName(className)
                     .ForNamespace(entityNamespace)
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForDomainModel())
+                    .AddUsingStatement(_generationContext.GetNamespaceForDomainModel())
                     .AddBaseClass($"IInterfacingDto")
                     .Build();
 
@@ -68,7 +68,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 entity = new ClassDeclarationSyntaxBuilder()
                     .WithName(className)
                     .ForNamespace(entityNamespace)
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForDomainModel())
+                    .AddUsingStatement(_generationContext.GetNamespaceForDomainModel())
                     .AddBaseClass(_generationContext.ActionDtoInterface)
                     .Build();
 

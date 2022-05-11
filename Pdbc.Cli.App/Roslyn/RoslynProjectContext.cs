@@ -34,17 +34,7 @@ namespace Pdbc.Cli.App.Roslyn
             }
             return result;
         }
-        [Obsolete("Prefer the string[] overload")]
-        public string GetNamespace(String subNamespace = null)
-        {
-            var result = $"{Configuration.RootNamespace}.{Name}";
-            if (subNamespace != null)
-            {
-                result = $"{result}.{subNamespace}";
-            }
-            return result;
-        }
-
+     
         public string GetFullFilenameFor(string className, params String[] subfolders)
         {
             var path = GetPath(subfolders);
@@ -84,73 +74,6 @@ namespace Pdbc.Cli.App.Roslyn
         }
 
 
-        #region Quick Actions
-
-        public string GetNamespaceForDomainModel()
-        {
-            var result = $"{Configuration.RootNamespace}.Domain.Model";
-
-            return result;
-        }
-        public string GetNamespaceForDomainModelHelpers(string parametersPluralEntityName)
-        {
-            var result = $"{Configuration.RootNamespace}.Tests.Helpers.Domain.{parametersPluralEntityName}";
-
-            return result;
-        }
-        public string GetNamespaceForData()
-        {
-            var result = $"{Configuration.RootNamespace}.Data";
-
-            return result;
-        }
-        public string GetNamespaceForDataRepositories()
-        {
-            var result = $"{Configuration.RootNamespace}.Data.Repositories";
-
-            return result;
-        }
-        //
-        public string GetNamespaceForIntegationTestDataExtensions()
-        {
-            var result = $"{Configuration.RootNamespace}.IntegrationTests.Data.Extensions";
-
-            return result;
-        }
-
-        public string GetNamespaceForDto(string parametersPluralEntityName)
-        {
-            var result = $"{Configuration.RootNamespace}.Dto.{parametersPluralEntityName}";
-
-            return result;
-        }
-        public string GetNamespaceForRequests(string parametersPluralEntityName)
-        {
-            var result = $"{Configuration.RootNamespace}.Api.Contracts.Requests.{parametersPluralEntityName}";
-
-            return result;
-        }
-        public string GetNamespaceForServices(string parametersPluralEntityName)
-        {
-            var result = $"{Configuration.RootNamespace}.Api.Contracts.Services.{parametersPluralEntityName}";
-
-            return result;
-        }
-        
-        public string GetNamespaceForCoreCqrs(string entityName, String actionName)
-        {
-            var result = $"{Configuration.RootNamespace}.Core.CQRS.{entityName}.{actionName}";
-
-            return result;
-        }
-
-        public string GetNamespaceForCoreCqrsTestDataBuilders(string entityName)
-        {
-            var result = $"{Configuration.RootNamespace}.Tests.Helpers.CQRS.{entityName}";
-
-            return result;
-        }
-        #endregion
 
         // TODO this should go into FileHelperService ???
         private void EnsureDirectoryExists(string path)

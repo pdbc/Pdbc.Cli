@@ -31,7 +31,11 @@ namespace Pdbc.Cli.App.Roslyn.Builders
             return this;
         }
 
-        public IList<String> _usingStatements = new List<String>();
+        public IList<String> _usingStatements = new List<String>()
+        {
+            "System.Threading.Tasks"
+        };
+
         public InterfaceDeclarationSyntaxBuilder AddUsingStatement(string statement)
         {
             _usingStatements.Add(statement);

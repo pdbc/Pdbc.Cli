@@ -2,11 +2,6 @@
 
 namespace Pdbc.Cli.App.Roslyn.Builders
 {
-    public interface IExpressionSyntaxBuilder
-    {
-        ExpressionSyntax Build();
-    }
-
     public interface IStatementSyntaxBuilder
     {
         StatementSyntax Build();

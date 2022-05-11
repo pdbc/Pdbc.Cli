@@ -53,7 +53,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 .AddUsingStatement("System")
                 .AddUsingAertssenFrameworkAuditModel()
                 .AddUsingAertssenFrameworkRepositories()
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForDomainModel())
+                .AddUsingStatement(_generationContext.GetNamespaceForDomainModel())
                 .AddBaseClass($"IEntityRepository<{_generationContext.EntityName}>")
                 .Build();
 
@@ -83,7 +83,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 .ForNamespace(entityNamespace)
                 .AddUsingStatement("System")
                 .AddUsingAertssenFrameworkRepositories()
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForDomainModel())
+                .AddUsingStatement(_generationContext.GetNamespaceForDomainModel())
                 .AddUsingAertssenFrameworkAuditModel()
                 .AddBaseClass($"EntityFrameworkRepository<{_generationContext.EntityName}>")
                 .AddBaseClass(_generationContext.EntityName.ToRepositoryInterface())
@@ -122,8 +122,8 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 .WithName(className)
                 .ForNamespace(entityNamespace)
                 .AddUsingAertssenFrameworkRepositories()
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForDomainModel())
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForDomainModelHelpers(_generationContext.PluralEntityName))
+                .AddUsingStatement(_generationContext.GetNamespaceForDomainModel())
+                .AddUsingStatement(_generationContext.GetNamespaceForDomainModelHelpers())
                 .AddUsingAertssenFrameworkAuditModel()
                 .AddUnitTestUsingStatement()
 
@@ -193,10 +193,10 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 .ForNamespace(entityNamespace)
                 
                 .AddUsingAertssenFrameworkRepositories()
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForDataRepositories())
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForIntegationTestDataExtensions())
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForDomainModel())
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForDomainModelHelpers(_generationContext.PluralEntityName))
+                .AddUsingStatement(_generationContext.GetNamespaceForDataRepositories())
+                .AddUsingStatement(_generationContext.GetNamespaceForIntegationTestDataExtensions())
+                .AddUsingStatement(_generationContext.GetNamespaceForDomainModel())
+                .AddUsingStatement(_generationContext.GetNamespaceForDomainModelHelpers())
                 .AddUnitTestUsingStatement()
                 .AddUsingAertssenFrameworkAuditModel()
                 .AddBaseClass($"BaseRepositoryExtensionsSpecification<{_generationContext.EntityName.ToRepositoryInterface()}>")

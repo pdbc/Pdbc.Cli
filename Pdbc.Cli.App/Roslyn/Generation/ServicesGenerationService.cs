@@ -24,17 +24,19 @@ namespace Pdbc.Cli.App.Roslyn.Generation
         {
             await GenerateServiceContractInterface();
             await GenerateWebApiServiceContractClass();
+            await GenerateCqrsServiceContractInterface();
             await GenerateCqrsServiceContractClass();
         }
 
         public string[] GetSubFolders()
         {
-            return new[] { "Services", _generationContext.PluralEntityName };
-        } 
+            return new[] {"Services", _generationContext.PluralEntityName};
+        }
+
 
         public async Task GenerateServiceContractInterface()
         {
-            var className = _generationContext.ServiceContractInterfaceName;
+            var className = _generationContext.ServiceContractName.ToInterface();
             var subfolders = GetSubFolders();
 
             var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("Api.Contracts");
@@ -46,12 +48,11 @@ namespace Pdbc.Cli.App.Roslyn.Generation
             {
                 var entityNamespace = roslynProjectContext.GetNamespace(subfolders);
 
-                // TODO Get the correct base class 
                 entity = new InterfaceDeclarationSyntaxBuilder()
                     .WithName(className)
                     .ForNamespace(entityNamespace)
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForRequests(_generationContext.PluralEntityName))
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForDto(_generationContext.PluralEntityName))
+                    .AddUsingStatement(_generationContext.GetNamespaceForRequests())
+                    .AddUsingStatement(_generationContext.GetNamespaceForDto())
                     .AddAertssenFrameworkContractUsingStatements()
                     .Build();
 
@@ -59,14 +60,18 @@ namespace Pdbc.Cli.App.Roslyn.Generation
             }
 
 
-            //Task<ListAssetsResponse> ListAssets(ListAssetsRequest request);
-            //entity = await _roslynGenerator.AppendServiceContractMethod(fullFilename, entity, _generationContext);
+            entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
+                    .WithName(_generationContext.ActionOperationName)
+                    .IsInterfaceMethod(true)
+                    .WithReturnType($"Task<{_generationContext.RequestOutputClassName}>")
+                    .AddParameter(_generationContext.RequestInputClassName, "request"),
+                fullFilename);
         }
 
         public async Task GenerateWebApiServiceContractClass()
         {
             var className = _generationContext.WebApiServiceContractName;
-            var subfolders = new[] { _generationContext.PluralEntityName };
+            var subfolders = new[] {_generationContext.PluralEntityName};
 
             var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("Api.ServiceAgent");
             var fullFilename = roslynProjectContext.GetFullFilenameFor(className, subfolders);
@@ -81,37 +86,61 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 entity = new ClassDeclarationSyntaxBuilder()
                     .WithName(className)
                     .ForNamespace(entityNamespace)
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForRequests(_generationContext.PluralEntityName))
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForServices(_generationContext.PluralEntityName))
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForDto(_generationContext.PluralEntityName))
+                    .AddUsingStatement(_generationContext.GetNamespaceForRequests())
+                    .AddUsingStatement(_generationContext.GetNamespaceForServices())
+                    .AddUsingStatement(_generationContext.GetNamespaceForDto())
                     .AddUsingStatement("Microsoft.Extensions.Logging")
                     .AddAertssenFrameworkServiceAgentsUsingStatements()
                     .AddAertssenFrameworkContractUsingStatements()
                     .AddBaseClass("WebApiService")
-                    .AddBaseClass(_generationContext.ServiceContractInterfaceName)
+                    .AddBaseClass(_generationContext.ServiceContractName.ToInterface())
                     .Build();
 
                 await _fileHelperService.WriteFile(fullFilename, entity);
             }
 
-
             entity = await Save(entity, new ConstructorDeclarationSyntaxBuilder().WithName(className)
                     .AddParameter("Func<IWebApiClientProxy>", "webApiClientFactory")
                     .AddParameter($"ILogger<{_generationContext.WebApiServiceContractName}>", "logger")
                     .AddBaseParameter("webApiClientFactory")
-                    .AddBaseParameter("")
+                    .AddBaseParameter(_generationContext.PluralEntityName.Quoted())
                     .AddBaseParameter("logger")
-
-                   
                 ,
                 fullFilename);
 
+            if (_generationContext.IsListAction)
+            {
+                entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName(_generationContext.ActionOperationName)
+                        .Async()
+                        .WithReturnType($"Task<{_generationContext.RequestOutputClassName}>")
+                        .AddParameter(_generationContext.RequestInputClassName, "request")
+                        .AddStatement(new StatementSyntaxBuilder().AddStatement(
+                            $"return await GetAsyncOData<{_generationContext.RequestInputClassName}, {_generationContext.RequestOutputClassName}, {_generationContext.DataDtoClass}>(request); ")),
+                    fullFilename);
+            } 
+            else if (_generationContext.IsGetAction)
+            {
+                entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName(_generationContext.ActionOperationName)
+                        .Async()
+                        .WithReturnType($"Task<{_generationContext.RequestOutputClassName}>")
+                        .AddParameter(_generationContext.RequestInputClassName, "request")
+                        .AddStatement(new StatementSyntaxBuilder().AddStatement(
+                            $"return await GetAsync<{_generationContext.RequestOutputClassName}>(request.Id.ToString());")),
+                    fullFilename);
+
+                //public async Task<GetAssetResponse> GetAsset(GetAssetRequest request)
+                //{
+                //    return await GetAsync<GetAssetResponse>($"{request.Id}");
+                //}
+            }
         }
 
         public async Task GenerateCqrsServiceContractInterface()
         {
             var className = _generationContext.CqrsServiceContractName.ToInterface();
-            var subfolders = new[] { "Services", _generationContext.PluralEntityName };
+            var subfolders = new[] {"Services", _generationContext.PluralEntityName};
 
             var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("Services.Cqrs");
             var fullFilename = roslynProjectContext.GetFullFilenameFor(className, subfolders);
@@ -126,25 +155,24 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 entity = new InterfaceDeclarationSyntaxBuilder()
                     .WithName(className)
                     .ForNamespace(entityNamespace)
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForRequests(_generationContext.PluralEntityName))
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForServices(_generationContext.PluralEntityName))
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForDto(_generationContext.PluralEntityName))
+                    .AddUsingStatement(_generationContext.GetNamespaceForRequests())
+                    .AddUsingStatement(_generationContext.GetNamespaceForServices())
+                    .AddUsingStatement(_generationContext.GetNamespaceForDto())
                     .AddAertssenFrameworkContractUsingStatements()
-                    
-                    .AddBaseClass(_generationContext.ServiceContractInterfaceName)
+
+                    .AddBaseClass(_generationContext.ServiceContractName.ToInterface())
                     .Build();
 
                 await _fileHelperService.WriteFile(fullFilename, entity);
-                
-            }
-            
-        }
 
+            }
+
+        }
 
         public async Task GenerateCqrsServiceContractClass()
         {
             var className = _generationContext.CqrsServiceContractName;
-            var subfolders = new[] { "Services", _generationContext.PluralEntityName };
+            var subfolders = new[] {"Services", _generationContext.PluralEntityName};
 
             var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("Services.Cqrs");
             var fullFilename = roslynProjectContext.GetFullFilenameFor(className, subfolders);
@@ -163,9 +191,11 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                     .AddUsingStatement("MediatR")
                     .AddUsingStatement("AutoMapper")
                     .AddUsingAertssenFrameworkValidationInfra()
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForRequests(_generationContext.PluralEntityName))
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForServices(_generationContext.PluralEntityName))
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForDto(_generationContext.PluralEntityName))
+                    .AddUsingStatement(_generationContext.GetNamespaceForRequests())
+                    .AddUsingStatement(_generationContext.GetNamespaceForServices())
+                    .AddUsingStatement(_generationContext.GetNamespaceForDto())
+                    .AddUsingStatement(_generationContext.GetNamespaceForCoreCqrs())
+                    .AddUsingAertssenFrameworkCqrsServices()
                     .AddAertssenFrameworkContractUsingStatements()
 
                     .AddBaseClass("CqrsService")
@@ -185,6 +215,29 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                     .AddBaseParameter("validationBag")
                 ,
                 fullFilename);
+
+
+            if (_generationContext.IsListAction)
+            {
+                entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName(_generationContext.ActionOperationName)
+                        .Async()
+                        .WithReturnType($"Task<{_generationContext.RequestOutputClassName}>")
+                        .AddParameter(_generationContext.RequestInputClassName, "request")
+                        .AddStatement(new StatementSyntaxBuilder().AddStatement(
+                            $"return await QueryForOData<{_generationContext.RequestInputClassName}, {_generationContext.CqrsInputClassName}, {_generationContext.DataDtoClass}, {_generationContext.RequestOutputClassName}>(request); ")),
+                    fullFilename);
+            } else if (_generationContext.IsGetAction)
+            {
+                 entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName(_generationContext.ActionOperationName)
+                        .Async()
+                        .WithReturnType($"Task<{_generationContext.RequestOutputClassName}>")
+                        .AddParameter(_generationContext.RequestInputClassName, "request")
+                        .AddStatement(new StatementSyntaxBuilder().AddStatement(
+                            $"return await Query<{_generationContext.RequestInputClassName}, {_generationContext.CqrsInputClassName}, {_generationContext.CqrsOutputClassName}, {_generationContext.RequestOutputClassName}>(request); ")),
+                    fullFilename);
+            }
 
         }
     }

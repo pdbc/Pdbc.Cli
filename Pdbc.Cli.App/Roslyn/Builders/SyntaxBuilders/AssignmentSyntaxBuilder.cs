@@ -9,28 +9,26 @@ namespace Pdbc.Cli.App.Roslyn.Builders
 {
     public class AssignmentSyntaxBuilder : IStatementSyntaxBuilder
     {
-        public String _variableName;
-        public AssignmentSyntaxBuilder WithVariableName(string parameterName)
+        public AssignmentSyntaxBuilder(String variableName, string parameterName)
         {
-            _variableName = parameterName;
-            return this;
-        }
-
-        public String _parameterName;
-        public AssignmentSyntaxBuilder WithParameterName(string parameterName)
-        {
+            _variableName = variableName;
             _parameterName = parameterName;
-            return this;
         }
 
-        //public ExpressionSyntax Build()
+        public String _variableName;
+        public String _parameterName;
+
+        //public AssignmentSyntaxBuilder WithVariableName(string parameterName)
         //{
-        //    return SyntaxFactory.AssignmentExpression
-        //    (
-        //        SyntaxKind.SimpleAssignmentExpression,
-        //        SyntaxFactory.IdentifierName(_variableName),
-        //        SyntaxFactory.IdentifierName(_parameterName)
-        //    );
+        //    _variableName = parameterName;
+        //    return this;
+        //}
+
+
+        //public AssignmentSyntaxBuilder WithParameterName(string parameterName)
+        //{
+        //    _parameterName = parameterName;
+        //    return this;
         //}
 
         public StatementSyntax Build()

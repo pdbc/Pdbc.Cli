@@ -10,6 +10,7 @@ namespace Pdbc.Cli.App.Context
         private readonly string _pluralEntityName;
         private readonly string _action;
         private string _actionName;
+        private string _fullActionName;
 
         public StandardAction(StartupParameters startupParameters) 
         {
@@ -21,84 +22,14 @@ namespace Pdbc.Cli.App.Context
             //CalculateActionName();
         }
 
-        public String CalculateActionName()
-        {
-            if (String.IsNullOrEmpty(_action))
-                _actionName = String.Empty;
 
-            // TODO calcuate correct Name (ex. StoreWithoutResult = Store , ...)
-            _actionName = _action;
-            return _actionName;
 
-        }
-
-        public Boolean ShouldGenerateCqrs()
-        {
-            return _action != null;
-        }
-
-        public bool RequiresActionDto()
-        {
-            if (_actionName is "Store" or "Create" or "Update")
-                return true;
-
-            return false;
-        }
-
-        public bool RequiresDataDto()
-        {
-            // TODO if we do not want a response Store/Update/Create should return false!
-            if (_actionName is "List" or "Get")
-                return true;
-
-            if (_startupParameters.WithoutResponse)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        public bool RequiresFactory()
-        {
-            // TODO if we do not want a response Store/Update/Create should return false!
-            if (_actionName is "Store" or "Create")
-                return true;
-
-            return false;
-        }
-
-        public bool RequiresChangesHandler()
-        {
-            // TODO if we do not want a response Store/Update/Create should return false!
-            if (_actionName is "Store" or "Update")
-                return true;
-
-            return false;
-        }
+        
 
         #region CQRS Type
 
-        public String GetCqrsInputType()
-        {
-            if (_actionName is "Get" or "List")
-            {
-                return "Query";
-            }
 
-            return "Command";
-        }
 
-        public String GetCqrsOutputType()
-        {
-            if (_actionName is "Get" or "List")
-            {
-                return "ViewModel";
-            }
-
-            // TODO Can be Nothing
-            return "Result";
-        }
 
         #endregion
 

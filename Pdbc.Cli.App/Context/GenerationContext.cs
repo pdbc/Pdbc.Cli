@@ -9,28 +9,148 @@ namespace Pdbc.Cli.App.Context
         public StartupParameters Parameters { get; }
         public GenerationConfiguration Configuration { get; }
 
-        public StandardAction StandardActionInfo { get; private set; }
-
-
         public GenerationContext(StartupParameters parameters,
                                  GenerationConfiguration configuration)
         {
             Parameters = parameters;
             Configuration = configuration;
 
-            StandardActionInfo = new StandardAction(Parameters);
-            ActionName = StandardActionInfo.CalculateActionName();
+            CalculateActionName();
         }
+
 
         public String EntityName => Parameters.EntityName;
         public string PluralEntityName => Parameters.PluralEntityName;
 
         public String ActionName { get; private set; }
-        public string CqrsInputType => StandardActionInfo.GetCqrsInputType();
-        public string CqrsOutputType => StandardActionInfo.GetCqrsOutputType();
+        public String FullActionName { get; private set; }
+
+
+        public string CqrsInputType { get; private set; }
+        public string CqrsOutputType { get; private set; }
+
+        public Boolean ShouldGenerateCqrs { get; private set; }
+        public Boolean RequiresActionDto { get; private set; }
+        public Boolean RequiresDataDto { get; private set; }
+        public Boolean RequiresFactory { get; private set; }
+        public Boolean RequiresChangesHandler { get; private set; }
+        
+
+        public String ApiRequestBaseClassName { get; private set; }
+        public String ApiResponseBaseClassName { get; private set; }
+
+        public string ActionOperationName { get; private set; }
+
+
+        #region Type Of Action
+        public Boolean IsListAction { get; private set; }
+
+        public Boolean IsGetAction { get; private set; }
+
+        #endregion
+
+        #region StandarAction Code
+
+        public void CalculateActionName()
+        {
+            if (String.IsNullOrEmpty(Parameters.Action))
+            {
+                ActionName = String.Empty;
+                ShouldGenerateCqrs = false;
+            }
+
+            ShouldGenerateCqrs = true;
+            ActionName = Parameters.Action;
+            FullActionName = $"{ActionName}{PluralEntityName}";
+
+            ApiRequestBaseClassName = "AertssenRequest";
+            ApiResponseBaseClassName = "AertssenResponse";
+            ActionOperationName = $"{ActionName}{EntityName}";
+
+            RequiresFactory = false;
+            RequiresDataDto = false;
+            RequiresChangesHandler = false;
+
+            IsListAction = false;
+            IsGetAction = false;
+
+            switch (ActionName)
+            {
+                case "Get":
+                    RequiresDataDto = true;
+                    CqrsInputType = "Query";
+                    CqrsOutputType = "ViewModel";
+                    IsGetAction = true;
+
+                    break;
+
+                case "List":
+                    RequiresDataDto = true;
+                    CqrsInputType = "Query";
+                    CqrsOutputType = "ViewModel";
+                    IsListAction = true;
+
+                    ApiRequestBaseClassName = "AertssenListRequest";
+                    ApiResponseBaseClassName = $"AertssenListResponse<{this.DataDtoClass}>";
+                    ActionOperationName = $"{ActionName}{PluralEntityName}";
+                    break;
+
+                case "Store":
+                    CqrsInputType = "Command";
+                    CqrsOutputType = "Result";
+                    RequiresFactory = true;
+                    RequiresChangesHandler = true;
+                    RequiresActionDto = true;
+
+                    if (!Parameters.WithoutResponse)
+                    {
+                        RequiresDataDto = true;
+                    }
+                    break;
+
+                case "Create":
+                    CqrsInputType = "Command";
+                    CqrsOutputType = "Result";
+                    RequiresFactory = true;
+                    RequiresActionDto = true;
+
+                    if (!Parameters.WithoutResponse)
+                    {
+                        RequiresDataDto = true;
+                    }
+                    break;
+
+                case "Update":
+                    CqrsInputType = "Command";
+                    CqrsOutputType = "Result";
+                    RequiresChangesHandler = true;
+                    RequiresActionDto = true;
+
+                    if (!Parameters.WithoutResponse)
+                    {
+                        RequiresDataDto = true;
+                    }
+
+                    break;
+
+                case "Delete":
+
+                    break;
+                default:
+
+                    break;
+            }
+            
+        }
+
+        #endregion
+
+
+
+
 
         #region DTO
-        public string ActionDtoClass =>  $"{EntityActionName}Dto";
+        public string ActionDtoClass => $"{EntityActionName}Dto";
         public string ActionDtoInterface => ActionDtoClass.ToInterface();
 
         public string DataDtoClass => $"{EntityName}DataDto";
@@ -45,7 +165,7 @@ namespace Pdbc.Cli.App.Context
         public string GetCqrsOutputClassNameBasedOnAction()
         {
             var outputCqrsOutputClassName = CqrsOutputClassName;
-            if (IsListAction())
+            if (IsListAction)
             {
                 outputCqrsOutputClassName = $"IQueryable<{DataDtoClass}>";
             }
@@ -65,10 +185,10 @@ namespace Pdbc.Cli.App.Context
 
         #region Services
         public string ServiceContractName => $"{Parameters.PluralEntityName}Service";
-        public string ServiceContractInterfaceName => ServiceContractName.ToInterface();
+        //public string ServiceContractInterfaceName => ServiceContractName.ToInterface();
 
         public string CqrsServiceContractName => $"{Parameters.PluralEntityName}CqrsService";
-        public string CqrsServiceContractInterfaceName => CqrsServiceContractName.ToInterface();
+        //public string CqrsServiceContractInterfaceName => CqrsServiceContractName.ToInterface();
 
         public string WebApiServiceContractName => $"WebApi{Parameters.PluralEntityName}Service";
 
@@ -82,56 +202,24 @@ namespace Pdbc.Cli.App.Context
 
         #region FullyQualifiedTypes
 
-        public string FactoryType => $"IFactory<{ActionDtoInterface},{EntityName}>";
-        public string ChangesHandlerType => $"IChangesHandler<{ActionDtoInterface},{EntityName}>";
-        public string RepositoryGenericType => $"IEntityRepository<{EntityName}>";
-
         public string DbContextName => $"{Configuration.ApplicationName}DbContext";
-        //{
-        //    return $"";
-        //}
-        //public static string ToChangesHandlerType(this StandardAction standardAction)
-        //{
-        //    return $"IChangesHandler<{standardAction.ToActionDtoInterface()},{ standardAction._entityName}>";
-        //}
-
-        //public static String ToRepositoryType(this StandardAction standardAction)
-        //{
-        //    return $"IEntityRepository<{standardAction._entityName}>";
-        //}
 
         #endregion
 
 
-        // TODO provide parameters for this ??
-        public bool ShouldCreateCqrsFiles()
+        public String GetHttpMethodAttributeValue()
         {
-            return StandardActionInfo.ShouldGenerateCqrs();
-        }
+            if (IsListAction)
+            {
+                return $"odata/{PluralEntityName}";
+            }
 
-        public bool RequiresActionDto()
-        {
-            return StandardActionInfo.RequiresActionDto();
-        }
+            if (IsGetAction)
+            {
+                return $"{PluralEntityName}/"+"{id}";
+            }
 
-        public bool RequiresDataDto()
-        {
-            return StandardActionInfo.RequiresDataDto();
-        }
-
-        public bool RequiresFactory()
-        {
-            return StandardActionInfo.RequiresFactory();
-        }
-
-        public bool RequiresChangesHandler()
-        {
-            return StandardActionInfo.RequiresChangesHandler();
-        }
-
-        public bool IsListAction()
-        {
-            return ActionName == "List";
+            return string.Empty;
         }
     }
 }

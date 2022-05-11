@@ -58,5 +58,15 @@ namespace Pdbc.Cli.App.Extensions
         {
             return $"{type}Builder";
         }
+
+
+    }
+
+    public static class StringExtensions
+    {
+        public static String Quoted(this string s)
+        {
+            return $"\"{s}\"";
+        }
     }
 }

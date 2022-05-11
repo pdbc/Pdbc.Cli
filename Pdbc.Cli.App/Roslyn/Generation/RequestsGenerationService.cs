@@ -36,7 +36,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation
             var fullFilename = roslynProjectContext.GetFullFilenameFor(className, subfolders);
 
             // Generate the entity
-
+            
             var entity = await roslynProjectContext.GetClassByName(className);
             if (entity == null)
             {
@@ -46,53 +46,61 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 entity = new ClassDeclarationSyntaxBuilder()
                     .WithName(className)
                     .ForNamespace(entityNamespace)
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForDto(_generationContext.PluralEntityName))
+                    .AddUsingStatement(_generationContext.GetNamespaceForDto())
                     .AddAertssenFrameworkContractUsingStatements()
-                    .AddBaseClass($"AertssenRequest")
+                    .AddBaseClass(_generationContext.ApiRequestBaseClassName)
+                    .AddHttpMethodAttribute(_generationContext.GetHttpMethodAttributeValue())
                     .Build();
 
+
+                ;
                 await _fileHelperService.WriteFile(fullFilename, entity);
 
 
             }
 
-            if (_generationContext.RequiresActionDto())
+            if (_generationContext.RequiresActionDto)
             {
                 entity = await Save(entity, new PropertyDeclarationSyntaxBuilder().WithName(_generationContext.EntityName).ForType(_generationContext.ActionDtoInterface), fullFilename);
+            }
+
+            if (_generationContext.IsGetAction)
+            {
+                entity = await Save(entity, new PropertyDeclarationSyntaxBuilder().WithName("Id").ForType("long"), fullFilename);
             }
         }
 
         public async Task GenerateRequestOutputClass()
         {
-            var className = _generationContext.CqrsOutputClassName;
+            var className = _generationContext.RequestOutputClassName;
             var subfolders = GetSubFolders();
 
             var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("Api.Contracts");
             var fullFilename = roslynProjectContext.GetFullFilenameFor(className, subfolders);
-
-
+            
             var entity = await roslynProjectContext.GetClassByName(className);
             if (entity == null)
             {
                 var entityNamespace = roslynProjectContext.GetNamespace(subfolders);
 
-                // TODO Get the correct base class 
-                // List => AertssenListResponse<AssetDataDto> (oData)
+
                 entity = new ClassDeclarationSyntaxBuilder()
                     .WithName(className)
                     .ForNamespace(entityNamespace)
-                    .AddUsingStatement(roslynProjectContext.GetNamespaceForDto(_generationContext.PluralEntityName))
+                    .AddUsingStatement(_generationContext.GetNamespaceForDto())
                     .AddAertssenFrameworkContractUsingStatements()
-                    .AddBaseClass($"AertssenResponse")
+                    .AddBaseClass(_generationContext.ApiResponseBaseClassName)
                     .Build();
 
                 await _fileHelperService.WriteFile(fullFilename, entity);
             }
 
-            if (_generationContext.StandardActionInfo.RequiresDataDto())
+            if (_generationContext.RequiresDataDto)
             {
                 entity = await Save(entity, new PropertyDeclarationSyntaxBuilder().WithName(_generationContext.EntityName).ForType(_generationContext.DataDtoClass), fullFilename);
             }
         }
+
+   
     }
 }

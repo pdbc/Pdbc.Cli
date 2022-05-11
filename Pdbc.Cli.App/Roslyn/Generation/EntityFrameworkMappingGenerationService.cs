@@ -48,7 +48,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 .AddUsingAertssenFrameworkConfiguration()
                 .AddUsingAertssenFrameworkAuditModel()
                 .AddUsingAertssenFrameworkRepositories()
-                .AddUsingStatement(roslynProjectContext.GetNamespaceForDomainModel())
+                .AddUsingStatement(_generationContext.GetNamespaceForDomainModel())
                 .AddBaseClass($"AuditableIdentifiableMapping<{_generationContext.EntityName}>")
                 .Build();
 
@@ -56,10 +56,21 @@ namespace Pdbc.Cli.App.Roslyn.Generation
 
             string bodyStatementToTable = $"builder.ToTable(\"{_generationContext.PluralEntityName}\");";
             entity = await Save(entity, new MethodDeclarationSyntaxBuilder().WithName("Configure")
-                    .AddParameter($"EntityTypeBuilder <{_generationContext.EntityName}>","builder")
+                    .AddParameter($"EntityTypeBuilder <{_generationContext.EntityName}>", "builder")
+                    .IsOverride(true)
+                    .AddStatement(new StatementSyntaxBuilder().AddStatement(@"base.Configure(builder);"))
                     .AddStatement(new StatementSyntaxBuilder().AddStatement(bodyStatementToTable))
                 ,
                 fullFilename);
+
+
+
+            
+            //entity = await Save(entity, new MethodDeclarationSyntaxBuilder().WithName("Configure")
+                   
+            //        .AddStatement(new StatementSyntaxBuilder().AddStatement(bodyStatementToTable))
+            //    ,
+            //    fullFilename);
 
         }
 

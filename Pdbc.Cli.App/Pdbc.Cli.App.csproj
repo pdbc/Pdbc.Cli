@@ -8,16 +8,23 @@
 
   <ItemGroup>
     <Compile Remove="Legacy\**" />
+    <Compile Remove="Model\Items\**" />
     <Compile Remove="Roslyn\Legacy\**" />
     <EmbeddedResource Remove="Legacy\**" />
+    <EmbeddedResource Remove="Model\Items\**" />
     <EmbeddedResource Remove="Roslyn\Legacy\**" />
     <None Remove="Legacy\**" />
+    <None Remove="Model\Items\**" />
     <None Remove="Roslyn\Legacy\**" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Remove="RoslynGenerationContext.cs" />
     <Compile Remove="Visitors\MyRewriter.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Model\Items\PropertyItem.cs" />
   </ItemGroup>
 
   <ItemGroup>

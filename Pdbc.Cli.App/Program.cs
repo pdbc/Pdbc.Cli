@@ -26,9 +26,9 @@ namespace Pdbc.Cli.App
 
             var startupParameter = new StartupParameters
             {
-                EntityName = "Address",
-                PluralEntityName = "Addresses",
-                Action = "List"
+                EntityName = "Route",
+                PluralEntityName = "Routes",
+                Action = "Get"
             };
 
             RunOptions(startupParameter);
@@ -56,7 +56,7 @@ namespace Pdbc.Cli.App
             }
 
             // TODO Fix paths
-            cliConfiguration.BasePath = @"C:\repos\Development\Aertssen.Framework.Templates\demo\core";
+            cliConfiguration.BasePath = @"C:\repos\Development\Aertssen.Framework.Templates\demo\core1";
             cliConfiguration.ApplicationName = "Locations";
             cliConfiguration.RootNamespace = "Locations";
 
@@ -92,9 +92,9 @@ namespace Pdbc.Cli.App
                 .GetResult();
 
 
-            if (generationContext.ShouldCreateCqrsFiles())
+            if (generationContext.ShouldGenerateCqrs)
             {
-                if (generationContext.RequiresActionDto())
+                if (generationContext.RequiresActionDto)
                 {
                     var entityActionDtoGenerationService = new EntityActionDtoGenerationService(roslySolutionContext, fileHelperService, generationContext);
                     entityActionDtoGenerationService.Generate()
@@ -102,7 +102,7 @@ namespace Pdbc.Cli.App
                         .GetResult();
                 }
 
-                if (generationContext.RequiresDataDto())
+                if (generationContext.RequiresDataDto)
                 {
                     var entityDataDtoGenerationService = new EntityDataDtoGenerationService(roslySolutionContext, fileHelperService, generationContext);
                     entityDataDtoGenerationService.Generate()
@@ -121,7 +121,7 @@ namespace Pdbc.Cli.App
                     .GetResult();
 
                 var servicesGenerationService = new ServicesGenerationService(roslySolutionContext, fileHelperService, generationContext);
-                requestsGenerationService.Generate()
+                servicesGenerationService.Generate()
                     .GetAwaiter()
                     .GetResult();
 
