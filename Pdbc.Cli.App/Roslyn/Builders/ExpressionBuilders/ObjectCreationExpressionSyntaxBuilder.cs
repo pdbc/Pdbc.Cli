@@ -37,12 +37,13 @@ namespace Pdbc.Cli.App.Roslyn.Builders
                         IdentifierName(p.Value)));
             });
 
+
             ObjectCreationExpressionSyntax expression = ObjectCreationExpression(IdentifierName(_name));
             if (list.Count == 1)
             {
-                
-                expression = expression
-                    .WithInitializer(InitializerExpression(SyntaxKind.ObjectInitializerExpression, SingletonSeparatedList<ExpressionSyntax>(list.FirstOrDefault())));
+                expression = expression.WithInitializer(InitializerExpression(
+                    SyntaxKind.ObjectInitializerExpression, 
+                        SingletonSeparatedList<ExpressionSyntax>(list.FirstOrDefault())));
                 
             }
             else

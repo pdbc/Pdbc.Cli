@@ -50,6 +50,11 @@ namespace Pdbc.Cli.App.Roslyn.Generation
             }
 
 
+            if (_generationContext.IsStoreAction)
+            {
+                entity = await Save(entity, new PropertyDeclarationSyntaxBuilder().WithName("Id").ForType("long?"), fullFilename);
+            }
+
         }
 
         public async Task GenerateEntityActionClassDto()
@@ -79,6 +84,10 @@ namespace Pdbc.Cli.App.Roslyn.Generation
             entity = await Save(entity, new PropertyDeclarationSyntaxBuilder().WithName("ExternalIdentification").ForType("String"), fullFilename);
             entity = await Save(entity, new PropertyDeclarationSyntaxBuilder().WithName("DateModified").ForType("DateTimeOffset"), fullFilename);
 
+            if (_generationContext.IsStoreAction)
+            {
+                entity = await Save(entity, new PropertyDeclarationSyntaxBuilder().WithName("Id").ForType("long?"), fullFilename);
+            }
         }
     }
 }

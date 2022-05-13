@@ -44,9 +44,17 @@ namespace Pdbc.Cli.App.Context
 
         #region Type Of Action
         public Boolean IsListAction { get; private set; }
-
         public Boolean IsGetAction { get; private set; }
+        public Boolean IsDeleteAction { get; private set; }
+        public Boolean IsStoreAction { get; private set; }
+        public Boolean IsUpdateAction { get; private set; }
+        public Boolean IsCreateAction { get; private set; }
 
+        public Boolean IsWithoutResponse { get; private set; }
+        #endregion
+
+        #region Filtering of class generation
+        public Boolean ShouldGenerateCqrsOutputClass { get; private set; }
         #endregion
 
         #region StandarAction Code
@@ -73,6 +81,13 @@ namespace Pdbc.Cli.App.Context
 
             IsListAction = false;
             IsGetAction = false;
+            IsDeleteAction = false;
+            IsStoreAction = false;
+            IsCreateAction = false;
+            IsUpdateAction = false;
+            IsWithoutResponse = false;
+
+            ShouldGenerateCqrsOutputClass = true;
 
             switch (ActionName)
             {
@@ -89,6 +104,7 @@ namespace Pdbc.Cli.App.Context
                     CqrsInputType = "Query";
                     CqrsOutputType = "ViewModel";
                     IsListAction = true;
+                    ShouldGenerateCqrsOutputClass = false;
 
                     ApiRequestBaseClassName = "AertssenListRequest";
                     ApiResponseBaseClassName = $"AertssenListResponse<{this.DataDtoClass}>";
@@ -101,7 +117,10 @@ namespace Pdbc.Cli.App.Context
                     RequiresFactory = true;
                     RequiresChangesHandler = true;
                     RequiresActionDto = true;
+                    IsStoreAction = true;
 
+                    IsWithoutResponse = Parameters.WithoutResponse;
+                    ShouldGenerateCqrsOutputClass = !IsWithoutResponse;
                     if (!Parameters.WithoutResponse)
                     {
                         RequiresDataDto = true;
@@ -113,7 +132,10 @@ namespace Pdbc.Cli.App.Context
                     CqrsOutputType = "Result";
                     RequiresFactory = true;
                     RequiresActionDto = true;
+                    IsCreateAction = true;
 
+                    IsWithoutResponse = Parameters.WithoutResponse;
+                    ShouldGenerateCqrsOutputClass = !IsWithoutResponse;
                     if (!Parameters.WithoutResponse)
                     {
                         RequiresDataDto = true;
@@ -125,7 +147,10 @@ namespace Pdbc.Cli.App.Context
                     CqrsOutputType = "Result";
                     RequiresChangesHandler = true;
                     RequiresActionDto = true;
+                    IsUpdateAction = true;
 
+                    IsWithoutResponse = Parameters.WithoutResponse;
+                    ShouldGenerateCqrsOutputClass = !IsWithoutResponse;
                     if (!Parameters.WithoutResponse)
                     {
                         RequiresDataDto = true;
@@ -134,6 +159,11 @@ namespace Pdbc.Cli.App.Context
                     break;
 
                 case "Delete":
+                    CqrsInputType = "Command";
+                    CqrsOutputType = "Result";
+                    IsDeleteAction = true;
+                    IsWithoutResponse = true;
+                    ShouldGenerateCqrsOutputClass = !IsWithoutResponse;
 
                     break;
                 default:
@@ -159,8 +189,8 @@ namespace Pdbc.Cli.App.Context
 
         #region CQRS
         // Query/Command class
-        public string CqrsInputClassName => $"{EntityActionName}{CqrsInputType}";
-        public string CqrsOutputClassName => $"{EntityActionName}{CqrsOutputType}";
+        public string CqrsInputClassName => $"{ActionEntityName}{CqrsInputType}";
+        public string CqrsOutputClassName => $"{ActionEntityName}{CqrsOutputType}";
 
         public string GetCqrsOutputClassNameBasedOnAction()
         {
@@ -168,6 +198,11 @@ namespace Pdbc.Cli.App.Context
             if (IsListAction)
             {
                 outputCqrsOutputClassName = $"IQueryable<{DataDtoClass}>";
+            }
+
+            if (!this.ShouldGenerateCqrsOutputClass)
+            {
+                return "Nothing";
             }
 
             return outputCqrsOutputClassName;
@@ -179,8 +214,20 @@ namespace Pdbc.Cli.App.Context
         #endregion
 
         #region Api
-        public string RequestInputClassName => $"{EntityActionName}Request";
-        public string RequestOutputClassName => $"{EntityActionName}Response";
+        public string RequestInputClassName => $"{ActionEntityName}Request";
+        public string RequestOutputClassName => $"{ActionEntityName}Response";
+
+        public string GetApiOutputClassNameBasedOnAction()
+        {
+            var outputCqrsOutputClassName = RequestOutputClassName;
+            
+            if (!this.ShouldGenerateCqrsOutputClass)
+            {
+                return "AertssenResponse";
+            }
+
+            return outputCqrsOutputClassName;
+        }
         #endregion
 
         #region Services
@@ -194,10 +241,17 @@ namespace Pdbc.Cli.App.Context
 
         #endregion
 
+        public string BaseIntegrationTestClass => $"Base{Configuration.ApplicationName}ServiceTest";
+
+        public string BaseCqrsIntegrationTestClass => $"{Configuration.ApplicationName}IntegrationCqrsRequestSpecification";
+
+        public string BaseWebApiIntegrationTestClass => $"{Configuration.ApplicationName}IntegrationApiRequestSpecification";
+
+
         private String EntityActionName => $"{Parameters.EntityName}{ActionName}";
         private String ActionEntityName => $"{ActionName}{Parameters.EntityName}";
 
-        public String ServiceActionName => $"{ActionName}{Parameters.PluralEntityName}";
+        //public String ServiceActionName => $"{ActionName}{Parameters.PluralEntityName}";
 
 
         #region FullyQualifiedTypes
@@ -207,7 +261,7 @@ namespace Pdbc.Cli.App.Context
         #endregion
 
 
-        public String GetHttpMethodAttributeValue()
+        public String GetHttpMethodAttributeUrlValue()
         {
             if (IsListAction)
             {
@@ -219,6 +273,51 @@ namespace Pdbc.Cli.App.Context
                 return $"{PluralEntityName}/"+"{id}";
             }
 
+            if (IsDeleteAction)
+            {
+                return $"{PluralEntityName}/" + "{id}";
+            }
+
+            if (IsStoreAction ||IsUpdateAction)
+            {
+                return $"{PluralEntityName}/" + "{id}";
+            }
+
+            if (IsCreateAction)
+            {
+                return $"{PluralEntityName}";
+            }
+
+            return string.Empty;
+        }
+
+        public String GetHttpMethodAttributeMethodValue()
+        {
+            if (IsListAction)
+            {
+                return "Get";
+            }
+
+            if (IsGetAction)
+            {
+                return $"Get";
+            }
+
+            if (IsDeleteAction)
+            {
+                return "Delete";
+            }
+
+            if (IsStoreAction ||IsCreateAction)
+            {
+                return "Post";
+            }
+
+
+            if (IsUpdateAction)
+            {
+                return "Put";
+            }
             return string.Empty;
         }
     }

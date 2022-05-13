@@ -8,6 +8,7 @@ using Pdbc.Cli.App.Context;
 using Pdbc.Cli.App.Extensions;
 using Pdbc.Cli.App.Model.Items;
 using Pdbc.Cli.App.Roslyn.Builders;
+using Pdbc.Cli.App.Roslyn.Builders.SyntaxBuilders;
 using Pdbc.Cli.App.Roslyn.Extensions;
 using Pdbc.Cli.App.Services;
 
@@ -68,18 +69,28 @@ namespace Pdbc.Cli.App.Roslyn.Generation
 
             entity = await Save(entity, new MethodDeclarationSyntaxBuilder().WithName("GetAuditProperties").WithReturnType("IAuditProperties")
                     .IsOverride(true)
-                    .AddStatement(new StatementSyntaxBuilder()
-                        .AddStatement(@"
-                                return new AuditProperties()
-                                {
-                                    AreaId = this.Id,
-                                    AreaType = this.GetType().Name,
-                                    ObjectId = this.Id,
-                                    ObjectType = this.GetType().Name,
-                                    ObjectInfo = $""""
-                               };
-                            "))
-                    ,
+                    .AddStatement(new ReturnStatementSyntaxBuilder().WithObjectCreationExpression(
+                        new ObjectCreationExpressionSyntaxBuilder("AuditProperties")
+                            .AddAssignementStatement("AreaId", "this.Id")
+                            .AddAssignementStatement("AreaType", "this.GetType().Name")
+                            .AddAssignementStatement("ObjectId", "this.Id")
+                            .AddAssignementStatement("ObjectType", "this.GetType().Name")
+                            .AddAssignementStatement("ObjectInfo", "String.Empty")
+                        )
+                    ),
+                    //.AddStatement(new ReturnStatementSyntaxBuilder().WithObjectCreationExpression())
+                    //.AddStatement(new StatementSyntaxBuilder()
+                    //    .AddStatement(@"
+                    //            return new AuditProperties()
+                    //            {
+                    //                AreaId = this.Id,
+                    //                AreaType = this.GetType().Name,
+                    //                ObjectId = this.Id,
+                    //                ObjectType = this.GetType().Name,
+                    //                ObjectInfo = $""""
+                    //           };
+                    //        "))
+                    //,
                 fullFilename);
 
                 //.WithBody(

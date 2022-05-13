@@ -21,6 +21,28 @@
 
             return result;
         }
+        public static string GetNamespaceForIntegrationTests(this GenerationContext context)
+        {
+            var result = $"{context.Configuration.RootNamespace}.Integration.Tests.IntegrationTests.{context.PluralEntityName}";
+
+            return result;
+        }
+        public static string GetNamespaceForCqrsServices(this GenerationContext context)
+        {
+            var result = $"{context.Configuration.RootNamespace}.Services.Cqrs.Services.{context.PluralEntityName}";
+
+            return result;
+        }
+        //GetNamespaceForIntegrationTests
+
+        public static string GeNameForServiceAgents(this GenerationContext context)
+        {
+            var result = $"{context.Configuration.RootNamespace}.Api.ServiceAgent.{context.PluralEntityName}";
+
+            return result;
+        }
+        
+        //Locations.Api.Contracts.Services.Routes
         public static string GetNamespaceForDataRepositories(this GenerationContext context)
         {
             var result = $"{context.Configuration.RootNamespace}.Data.Repositories";
@@ -41,12 +63,15 @@
 
             return result;
         }
+
+
         public static string GetNamespaceForRequests(this GenerationContext context)
         {
             var result = $"{context.Configuration.RootNamespace}.Api.Contracts.Requests.{context.PluralEntityName}";
 
             return result;
         }
+        //Locations.Api.Contracts.Requests.Routes
         public static string GetNamespaceForServices(this GenerationContext context)
         {
             var result = $"{context.Configuration.RootNamespace}.Api.Contracts.Services.{context.PluralEntityName}";
@@ -67,5 +92,17 @@
 
             return result;
         }
-    }
+        public static string GetNamespaceForApiTestDataBuilders(this GenerationContext context)
+        {
+            var result = $"{context.Configuration.RootNamespace}.Tests.Helpers.Api.{context.PluralEntityName}";
+
+            return result;
+        }
+        public static string GetNamespaceForDomainTestDataBuilders(this GenerationContext context)
+        {
+            var result = $"{context.Configuration.RootNamespace}.Tests.Helpers.Domain.{context.PluralEntityName}";
+
+            return result;
+        }
+}
 }

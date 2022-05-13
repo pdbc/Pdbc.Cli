@@ -9,6 +9,16 @@ namespace Pdbc.Cli.App.Roslyn.Builders
 {
     public class StatementSyntaxBuilder : IStatementSyntaxBuilder
     {
+        public StatementSyntaxBuilder()
+        {
+            
+        }
+
+        public StatementSyntaxBuilder(string statement)
+        {
+            _body = statement;
+        }
+
         public string _body;
         public StatementSyntaxBuilder AddStatement(string body)
         {
@@ -31,30 +41,30 @@ namespace Pdbc.Cli.App.Roslyn.Builders
             _body = $"return new {objectToCreate}();";
             return this;
         }
-        public IList<StatementSyntaxBuilder> _subStatements = new List<StatementSyntaxBuilder>();
-        public StatementSyntaxBuilder AddSubStatement(StatementSyntaxBuilder statement)
-        {
-            _subStatements.Add(statement);
-            return this;
-        }
+        //public IList<StatementSyntaxBuilder> _subStatements = new List<StatementSyntaxBuilder>();
+        //public StatementSyntaxBuilder AddSubStatement(StatementSyntaxBuilder statement)
+        //{
+        //    _subStatements.Add(statement);
+        //    return this;
+        //}
 
         public StatementSyntax Build()
         {
             var methodBody = ParseStatement(_body);
 
-            var syntaxStatements = new List<StatementSyntax>();
-            if (_subStatements.Any())
-            {
-                foreach (var b in _subStatements)
-                {
-                    var s = b.Build();
-                    syntaxStatements.Add(s);
-                }
+            //var syntaxStatements = new List<StatementSyntax>();
+            //if (_subStatements.Any())
+            //{
+            //    foreach (var b in _subStatements)
+            //    {
+            //        var s = b.Build();
+            //        syntaxStatements.Add(s);
+            //    }
 
 
 
-                //methodBody = methodBody.ReplaceNode(methodBody.) Block(syntaxStatements);
-            }
+            //    //methodBody = methodBody.ReplaceNode(methodBody.) Block(syntaxStatements);
+            //}
 
             return methodBody;
 

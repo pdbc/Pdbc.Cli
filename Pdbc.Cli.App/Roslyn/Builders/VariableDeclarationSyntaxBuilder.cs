@@ -33,15 +33,26 @@ namespace Pdbc.Cli.App.Roslyn.Builders
             return this;
         }
 
+        private Boolean _isReadOnly = false;
+        public VariableDeclarationSyntaxBuilder WithIsReadonly(Boolean isReadOnly)
+        {
+            _isReadOnly = isReadOnly;
+            return this;
+        }
+
         public FieldDeclarationSyntax Build()
         {
-            var propertyDeclarationExternalSystem = FieldDeclaration(VariableDeclaration(ParseTypeName(_type))
+            var variable = FieldDeclaration(VariableDeclaration(ParseTypeName(_type))
                     .WithVariables(SingletonSeparatedList<VariableDeclaratorSyntax>(
                         VariableDeclarator(Identifier(_name)))))
-                .AddModifiers(Token(SyntaxKind.PrivateKeyword))
-                .AddModifiers(Token(SyntaxKind.ReadOnlyKeyword));
-            
-            return propertyDeclarationExternalSystem;
+                .AddModifiers(Token(_modifier));
+
+            if (_isReadOnly)
+            {
+                variable = variable.AddModifiers(Token(SyntaxKind.ReadOnlyKeyword));
+            }
+
+            return variable;
         }
     }
 }

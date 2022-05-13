@@ -113,10 +113,10 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
                         .WithName(_generationContext.ActionOperationName)
                         .Async()
-                        .WithReturnType($"Task<{_generationContext.RequestOutputClassName}>")
+                        .WithReturnType($"Task<{_generationContext.GetApiOutputClassNameBasedOnAction()}>")
                         .AddParameter(_generationContext.RequestInputClassName, "request")
                         .AddStatement(new StatementSyntaxBuilder().AddStatement(
-                            $"return await GetAsyncOData<{_generationContext.RequestInputClassName}, {_generationContext.RequestOutputClassName}, {_generationContext.DataDtoClass}>(request); ")),
+                            $"return await GetAsyncOData<{_generationContext.RequestInputClassName}, {_generationContext.GetApiOutputClassNameBasedOnAction()}, {_generationContext.DataDtoClass}>(request); ")),
                     fullFilename);
             } 
             else if (_generationContext.IsGetAction)
@@ -124,16 +124,34 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
                         .WithName(_generationContext.ActionOperationName)
                         .Async()
-                        .WithReturnType($"Task<{_generationContext.RequestOutputClassName}>")
+                        .WithReturnType($"Task<{_generationContext.GetApiOutputClassNameBasedOnAction()}>")
                         .AddParameter(_generationContext.RequestInputClassName, "request")
                         .AddStatement(new StatementSyntaxBuilder().AddStatement(
-                            $"return await GetAsync<{_generationContext.RequestOutputClassName}>(request.Id.ToString());")),
+                            $"return await GetAsync<{_generationContext.GetApiOutputClassNameBasedOnAction()}>(request.Id.ToString());")),
                     fullFilename);
+            }
+            else if (_generationContext.IsDeleteAction)
+            {
 
-                //public async Task<GetAssetResponse> GetAsset(GetAssetRequest request)
-                //{
-                //    return await GetAsync<GetAssetResponse>($"{request.Id}");
-                //}
+                entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName(_generationContext.ActionOperationName)
+                        .Async()
+                        .WithReturnType($"Task<{_generationContext.GetApiOutputClassNameBasedOnAction()}>")
+                        .AddParameter(_generationContext.RequestInputClassName, "request")
+                        .AddStatement(new StatementSyntaxBuilder().AddStatement(
+                            $"return await DeleteAsync<{_generationContext.GetApiOutputClassNameBasedOnAction()}>(request.Id.ToString());")),
+                    fullFilename);
+            }
+            else if (_generationContext.IsStoreAction)
+            {
+                entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName(_generationContext.ActionOperationName)
+                        .Async()
+                        .WithReturnType($"Task<{_generationContext.GetApiOutputClassNameBasedOnAction()}>")
+                        .AddParameter(_generationContext.RequestInputClassName, "request")
+                        .AddStatement(new StatementSyntaxBuilder().AddStatement(
+                            $"return await PostAsync<{_generationContext.RequestInputClassName},{_generationContext.GetApiOutputClassNameBasedOnAction()}>(request);")),
+                    fullFilename);
             }
         }
 
@@ -225,17 +243,28 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                         .WithReturnType($"Task<{_generationContext.RequestOutputClassName}>")
                         .AddParameter(_generationContext.RequestInputClassName, "request")
                         .AddStatement(new StatementSyntaxBuilder().AddStatement(
-                            $"return await QueryForOData<{_generationContext.RequestInputClassName}, {_generationContext.CqrsInputClassName}, {_generationContext.DataDtoClass}, {_generationContext.RequestOutputClassName}>(request); ")),
+                            $"return await QueryForOData<{_generationContext.RequestInputClassName}, {_generationContext.GetCqrsOutputClassNameBasedOnAction()}, {_generationContext.DataDtoClass}, {_generationContext.RequestOutputClassName}>(request); ")),
                     fullFilename);
             } else if (_generationContext.IsGetAction)
             {
                  entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
                         .WithName(_generationContext.ActionOperationName)
                         .Async()
-                        .WithReturnType($"Task<{_generationContext.RequestOutputClassName}>")
+                        .WithReturnType($"Task<{_generationContext.GetApiOutputClassNameBasedOnAction()}>")
                         .AddParameter(_generationContext.RequestInputClassName, "request")
                         .AddStatement(new StatementSyntaxBuilder().AddStatement(
-                            $"return await Query<{_generationContext.RequestInputClassName}, {_generationContext.CqrsInputClassName}, {_generationContext.CqrsOutputClassName}, {_generationContext.RequestOutputClassName}>(request); ")),
+                            $"return await Query<{_generationContext.RequestInputClassName}, {_generationContext.CqrsInputClassName}, {_generationContext.CqrsOutputClassName}, {_generationContext.GetApiOutputClassNameBasedOnAction()}>(request); ")),
+                    fullFilename);
+            }
+            else if (_generationContext.IsDeleteAction || _generationContext.IsStoreAction)
+            {
+                entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName(_generationContext.ActionOperationName)
+                        .Async()
+                        .WithReturnType($"Task<{_generationContext.GetApiOutputClassNameBasedOnAction()}>")
+                        .AddParameter(_generationContext.RequestInputClassName, "request")
+                        .AddStatement(new StatementSyntaxBuilder().AddStatement(
+                            $"return await Command<{_generationContext.RequestInputClassName}, {_generationContext.CqrsInputClassName}, {_generationContext.GetCqrsOutputClassNameBasedOnAction()}, {_generationContext.GetApiOutputClassNameBasedOnAction()}>(request); ")),
                     fullFilename);
             }
 

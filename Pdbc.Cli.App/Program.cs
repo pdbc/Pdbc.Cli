@@ -22,13 +22,13 @@ namespace Pdbc.Cli.App
 
         private static void HandleParseError(IEnumerable<Error> obj)
         {
-            Console.Write("Cannot parse the startup paraemters, going to default parameters");
+            Console.Write("Cannot parse the startup parameters, going to default parameters");
 
             var startupParameter = new StartupParameters
             {
                 EntityName = "Route",
                 PluralEntityName = "Routes",
-                Action = "Get"
+                Action = "Store"
             };
 
             RunOptions(startupParameter);
@@ -125,7 +125,10 @@ namespace Pdbc.Cli.App
                     .GetAwaiter()
                     .GetResult();
 
-
+                var integrationTestsGenerationService = new IntegrationTestsGenerationService(roslySolutionContext, fileHelperService, generationContext);
+                integrationTestsGenerationService.Generate()
+                    .GetAwaiter()
+                    .GetResult();
             }
 
             //var context = new RoslynGenerationContext();

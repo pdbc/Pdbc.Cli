@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
 using Pdbc.Cli.App.Context;
+using Pdbc.Cli.App.Extensions;
 using Pdbc.Cli.App.Model.Items;
 using Pdbc.Cli.App.Roslyn.Builders;
 using Pdbc.Cli.App.Roslyn.Extensions;
@@ -20,7 +21,10 @@ namespace Pdbc.Cli.App.Roslyn.Generation
         public async Task Generate()
         {
             await GenerateRequestInputClass();
+            await GenerateRequestInputClassTestDataBuilder();
+
             await GenerateRequestOutputClass();
+            await GenerateRequestOutputClassTestDataBuilder();
         }
 
         public string[] GetSubFolders()
@@ -49,7 +53,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                     .AddUsingStatement(_generationContext.GetNamespaceForDto())
                     .AddAertssenFrameworkContractUsingStatements()
                     .AddBaseClass(_generationContext.ApiRequestBaseClassName)
-                    .AddHttpMethodAttribute(_generationContext.GetHttpMethodAttributeValue())
+                    .AddHttpMethodAttribute(_generationContext.GetHttpMethodAttributeUrlValue(), _generationContext.GetHttpMethodAttributeMethodValue())
                     .Build();
 
 
@@ -61,14 +65,46 @@ namespace Pdbc.Cli.App.Roslyn.Generation
 
             if (_generationContext.RequiresActionDto)
             {
-                entity = await Save(entity, new PropertyDeclarationSyntaxBuilder().WithName(_generationContext.EntityName).ForType(_generationContext.ActionDtoInterface), fullFilename);
+                entity = await Save(entity, new PropertyDeclarationSyntaxBuilder().WithName(_generationContext.EntityName).ForType(_generationContext.ActionDtoClass), fullFilename);
             }
 
-            if (_generationContext.IsGetAction)
+            if (_generationContext.IsGetAction || _generationContext.IsDeleteAction)
             {
                 entity = await Save(entity, new PropertyDeclarationSyntaxBuilder().WithName("Id").ForType("long"), fullFilename);
             }
         }
+
+        private async Task GenerateRequestInputClassTestDataBuilder()
+        {
+            var className = _generationContext.RequestInputClassName.ToTestDataBuilder();
+            var subfolders = new[] { "Api", _generationContext.PluralEntityName };
+
+            var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("Tests.Helpers");
+            var fullFilename = roslynProjectContext.GetFullTestsFilenameFor(className, subfolders);
+
+            var entity = await roslynProjectContext.GetClassByName(className);
+            if (entity != null)
+            {
+                return;
+            }
+
+            var entityNamespace = roslynProjectContext.GetNamespace(subfolders);
+
+            entity = new ClassDeclarationSyntaxBuilder()
+                .WithName(className)
+                .ForNamespace(entityNamespace)
+                .AddUsingStatement("System")
+                .AddUsingStatement(_generationContext.GetNamespaceForServices())
+                .AddUsingStatement(_generationContext.GetNamespaceForRequests())
+                .AddAertssenFrameworkCoreUsingStatements()
+                .AddUnitTestUsingStatement()
+                .AddBaseClass($"{_generationContext.RequestInputClassName.ToBuilder()}")
+                .Build();
+
+            await _fileHelperService.WriteFile(fullFilename, entity);
+
+        }
+
 
         public async Task GenerateRequestOutputClass()
         {
@@ -101,6 +137,37 @@ namespace Pdbc.Cli.App.Roslyn.Generation
             }
         }
 
-   
+        private async Task GenerateRequestOutputClassTestDataBuilder()
+        {
+            var className = _generationContext.RequestOutputClassName.ToTestDataBuilder();
+            var subfolders = new[] { "Api", _generationContext.PluralEntityName };
+
+            var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("Tests.Helpers");
+            var fullFilename = roslynProjectContext.GetFullTestsFilenameFor(className, subfolders);
+
+            var entity = await roslynProjectContext.GetClassByName(className);
+            if (entity != null)
+            {
+                return;
+            }
+
+            var entityNamespace = roslynProjectContext.GetNamespace(subfolders);
+
+            entity = new ClassDeclarationSyntaxBuilder()
+                .WithName(className)
+                .ForNamespace(entityNamespace)
+                .AddUsingStatement("System")
+                .AddUsingStatement(_generationContext.GetNamespaceForServices())
+                .AddUsingStatement(_generationContext.GetNamespaceForRequests())
+                .AddAertssenFrameworkCoreUsingStatements()
+                .AddUnitTestUsingStatement()
+                .AddBaseClass($"{_generationContext.RequestOutputClassName.ToBuilder()}")
+                .Build();
+
+            await _fileHelperService.WriteFile(fullFilename, entity);
+
+        }
+
+
     }
 }

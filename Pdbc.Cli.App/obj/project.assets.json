@@ -6005,7 +6005,7 @@
     "version": "1.0.0",
     "restore": {
       "projectUniqueName": "C:\\repos\\Pdbc\\pdbc.cli\\Pdbc.Cli.App\\Pdbc.Cli.App.csproj",
-      "projectName": "PdbcCli",
+      "projectName": "AerCli",
       "projectPath": "C:\\repos\\Pdbc\\pdbc.cli\\Pdbc.Cli.App\\Pdbc.Cli.App.csproj",
       "packagesPath": "C:\\Users\\PDB\\.nuget\\packages\\",
       "outputPath": "C:\\repos\\Pdbc\\pdbc.cli\\Pdbc.Cli.App\\obj\\",

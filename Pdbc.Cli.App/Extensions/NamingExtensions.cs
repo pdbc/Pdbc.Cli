@@ -46,6 +46,15 @@ namespace Pdbc.Cli.App.Extensions
             return $"I{type}";
         }
 
+        public static string ToTest(this string type)
+        {
+            return $"{type}Test";
+        }
+
+        public static string ToIntegrationTest(this string type)
+        {
+            return $"{type}IntegrationTest";
+        }
         public static string ToEntityConfigurationClass(this string type)
         {
             return $"{type}Configuration";

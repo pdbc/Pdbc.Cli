@@ -74,6 +74,12 @@ namespace Pdbc.Cli.App.Roslyn.Builders
             AddUsingStatement("Aertssen.Framework.Core.Validation");
             return this;
         }
+        public ClassDeclarationSyntaxBuilder AddUsingAertssenFrameworkInfraTests()
+        {
+            AddUsingStatement("Aertssen.Framework.Tests.Infra");
+            return this;
+        }
+        //
         //"",
         public ClassDeclarationSyntaxBuilder AddUsingAertssenFrameworkConfiguration()
         {
@@ -122,6 +128,13 @@ namespace Pdbc.Cli.App.Roslyn.Builders
             return this;
         }
 
+        private bool _isAbstract;
+        public ClassDeclarationSyntaxBuilder IsAbstract(bool isAbstract)
+        {
+            _isAbstract = isAbstract;
+            return this;
+        }
+
         private bool _isTestFixture;
         public ClassDeclarationSyntaxBuilder AddTestFixtureAttribute(bool isTestFixture)
         {
@@ -130,11 +143,13 @@ namespace Pdbc.Cli.App.Roslyn.Builders
         }
         private bool _requiresHttpMethodAttribute;
         private String _route;
-        public ClassDeclarationSyntaxBuilder AddHttpMethodAttribute(string route)
+        private String _verb;
+        public ClassDeclarationSyntaxBuilder AddHttpMethodAttribute(string route, string verb)
         {
             _requiresHttpMethodAttribute = true;
             //[HttpAction("odata/assets", httpMethod: Method.Get)]
             _route = route;
+            _verb = verb;
             return this;
         }
 
@@ -146,24 +161,30 @@ namespace Pdbc.Cli.App.Roslyn.Builders
             var namespaceDeclaration = NamespaceDeclaration(ParseName(_namespace));
 
             var classDeclaration = ClassDeclaration(_name)
-                .AddModifiers(Token(_modifier))
-                .AddBaseClasses(_baseClasses.ToArray())
-                ;
-            
+                .AddModifiers(Token(_modifier));
+
+
+            if (_isAbstract)
+            {
+                classDeclaration = classDeclaration.AddModifiers(Token(SyntaxKind.AbstractKeyword));
+            }
+
+            classDeclaration = classDeclaration.AddBaseClasses(_baseClasses.ToArray());
+
             if (_isTestFixture)
             {
                 classDeclaration = classDeclaration.AddAttribute("TestFixture");
             }
             if (_requiresHttpMethodAttribute)
             {
-                var httpMethoAttribute = $"HttpAction(\"{_route}\", Method.Get)";
+                var httpMethoAttribute = $"HttpAction(\"{_route}\", Method.{_verb})";
                 classDeclaration = classDeclaration.AddAttribute(httpMethoAttribute);
             }
             // Add class to namespace
             namespaceDeclaration = namespaceDeclaration.AddMembers(classDeclaration);
 
             compilationUnitSyntax = compilationUnitSyntax.AddMembers(namespaceDeclaration);
-            
+
             return compilationUnitSyntax.GetClassDeclarationSyntaxFrom(); ;
         }
 
