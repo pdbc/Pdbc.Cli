@@ -85,8 +85,6 @@ C:\repos\Pdbc\pdbc.cli\Pdbc.Cli.App\bin\Debug\net5.0\zh-Hans\Microsoft.CodeAnaly
 C:\repos\Pdbc\pdbc.cli\Pdbc.Cli.App\bin\Debug\net5.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
 C:\repos\Pdbc\pdbc.cli\Pdbc.Cli.App\obj\Debug\net5.0\Pdbc.Cli.App.csproj.CopyComplete
 C:\repos\Pdbc\pdbc.cli\Pdbc.Cli.App\obj\Debug\net5.0\Pdbc.Cli.App.genruntimeconfig.cache
-C:\repos\Pdbc\pdbc.cli\Pdbc.Cli.App\obj\Debug\net5.0\Pdbc.Cli.App.csproj.AssemblyReference.cache
-C:\repos\Pdbc\pdbc.cli\Pdbc.Cli.App\obj\Debug\net5.0\Pdbc.Cli.App.csproj.SuggestedBindingRedirects.cache
 C:\repos\Pdbc\pdbc.cli\Pdbc.Cli.App\bin\Debug\net5.0\AerCli.exe
 C:\repos\Pdbc\pdbc.cli\Pdbc.Cli.App\bin\Debug\net5.0\AerCli.dll.config
 C:\repos\Pdbc\pdbc.cli\Pdbc.Cli.App\bin\Debug\net5.0\AerCli.deps.json
@@ -96,6 +94,8 @@ C:\repos\Pdbc\pdbc.cli\Pdbc.Cli.App\bin\Debug\net5.0\AerCli.dll
 C:\repos\Pdbc\pdbc.cli\Pdbc.Cli.App\bin\Debug\net5.0\AerCli.pdb
 C:\repos\Pdbc\pdbc.cli\Pdbc.Cli.App\obj\Debug\net5.0\AerCli.dll.config
 C:\repos\Pdbc\pdbc.cli\Pdbc.Cli.App\obj\Debug\net5.0\AerCli.dll
-C:\repos\Pdbc\pdbc.cli\Pdbc.Cli.App\obj\Debug\net5.0\refint\AerCli.dll
 C:\repos\Pdbc\pdbc.cli\Pdbc.Cli.App\obj\Debug\net5.0\AerCli.pdb
 C:\repos\Pdbc\pdbc.cli\Pdbc.Cli.App\obj\Debug\net5.0\ref\AerCli.dll
+C:\repos\Pdbc\pdbc.cli\Pdbc.Cli.App\obj\Debug\net5.0\Pdbc.Cli.App.csproj.AssemblyReference.cache
+C:\repos\Pdbc\pdbc.cli\Pdbc.Cli.App\obj\Debug\net5.0\Pdbc.Cli.App.csproj.SuggestedBindingRedirects.cache
+C:\repos\Pdbc\pdbc.cli\Pdbc.Cli.App\obj\Debug\net5.0\refint\AerCli.dll

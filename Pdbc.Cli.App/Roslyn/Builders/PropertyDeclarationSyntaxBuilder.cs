@@ -7,6 +7,17 @@ namespace Pdbc.Cli.App.Roslyn.Builders
 {
     public class PropertyDeclarationSyntaxBuilder
     {
+        public PropertyDeclarationSyntaxBuilder()
+        {
+            
+        }
+
+        public PropertyDeclarationSyntaxBuilder(String type, string name)
+        {
+            this._type = type;
+            this._name = name;
+        }
+
         public String GetIdentifier()
         {
             return _name;
@@ -47,13 +58,13 @@ namespace Pdbc.Cli.App.Roslyn.Builders
         }
         public PropertyDeclarationSyntax Build()
         {
-            var propertyDeclarationExternalSystem = PropertyDeclaration(ParseTypeName(_type), _name)
+            var property = PropertyDeclaration(ParseTypeName(_type), _name)
                     .AddModifiers(Token(_modifier))
                 ;
 
             if (_includeGetter)
             {
-                propertyDeclarationExternalSystem = propertyDeclarationExternalSystem
+                property = property
                     .AddAccessorListAccessors(
                     AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
                         .WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken)));
@@ -61,7 +72,7 @@ namespace Pdbc.Cli.App.Roslyn.Builders
 
             if (_includeSetter)
             {
-                propertyDeclarationExternalSystem = propertyDeclarationExternalSystem
+                property = property
                     .AddAccessorListAccessors(
                         AccessorDeclaration(SyntaxKind.SetAccessorDeclaration)
                             .WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken)));
@@ -69,7 +80,7 @@ namespace Pdbc.Cli.App.Roslyn.Builders
 
             if (_dependencyType != null)
             {
-                propertyDeclarationExternalSystem = propertyDeclarationExternalSystem
+                property = property
                     .WithExpressionBody(
                     ArrowExpressionClause(
                         InvocationExpression(
@@ -82,7 +93,7 @@ namespace Pdbc.Cli.App.Roslyn.Builders
                 ).WithSemicolonToken(Token(SyntaxKind.SemicolonToken));
             }
 
-            return propertyDeclarationExternalSystem;
+            return property;
         }
     }
 }

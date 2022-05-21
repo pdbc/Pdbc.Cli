@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Pdbc.Cli.App.Extensions
@@ -15,6 +16,13 @@ namespace Pdbc.Cli.App.Extensions
         {
             var namespaceUnitSyntax = compilationUnitSyntax.Members.OfType<NamespaceDeclarationSyntax>().FirstOrDefault();
             return namespaceUnitSyntax.Members.OfType<InterfaceDeclarationSyntax>().FirstOrDefault();
+        }
+
+
+        public static TSyntax GetSyntaxNodeFrom<TSyntax>(this CompilationUnitSyntax compilationUnitSyntax) where TSyntax : SyntaxNode
+        {
+            var namespaceUnitSyntax = compilationUnitSyntax.Members.OfType<NamespaceDeclarationSyntax>().FirstOrDefault();
+            return namespaceUnitSyntax.Members.OfType<TSyntax>().FirstOrDefault();
         }
     }
 }

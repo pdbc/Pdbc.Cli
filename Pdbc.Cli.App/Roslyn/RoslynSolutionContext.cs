@@ -31,12 +31,12 @@ namespace Pdbc.Cli.App.Roslyn
 
         }
 
-        public RoslynProjectContext GetRoslynProjectContextFor(String name)
+        public RoslynProjectContext GetRoslynProjectContextFor(String name, bool mustEndsWithName = false)
         {
             RoslynProjectContext roslyContext = null;
             if (!_roslynProjects.TryGetValue(name, out roslyContext))
             {
-                var project = GetProject(name);
+                var project = GetProject(name, mustEndsWithName);
                 roslyContext = new RoslynProjectContext(name, _configuration, project);
                 _roslynProjects.Add(name, roslyContext);
             }
@@ -44,8 +44,13 @@ namespace Pdbc.Cli.App.Roslyn
             return roslyContext;
         }
 
-        private Project GetProject(String name)
+        private Project GetProject(String name, bool mustEndsWithName = false)
         {
+            if (mustEndsWithName)
+            {
+                return Solution.Projects.FirstOrDefault(x => x.Name.EndsWith(name));
+            }
+
             return Solution.Projects.FirstOrDefault(x => x.Name.Contains(name));
         }
     }

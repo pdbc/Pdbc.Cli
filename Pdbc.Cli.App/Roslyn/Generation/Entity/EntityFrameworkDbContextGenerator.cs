@@ -1,34 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.CodeAnalysis.CSharp;
-using Pdbc.Cli.App.Context;
-using Pdbc.Cli.App.Extensions;
-using Pdbc.Cli.App.Model.Items;
 using Pdbc.Cli.App.Roslyn.Builders;
 using Pdbc.Cli.App.Roslyn.Extensions;
-using Pdbc.Cli.App.Services;
 
-namespace Pdbc.Cli.App.Roslyn.Generation
+namespace Pdbc.Cli.App.Roslyn.Generation.Entity
 {
-    public class EntityFrameworkDbContextGenerationService : BaseGenerationService
+    public static class EntityFrameworkDbContextGenerator
     {
-        public EntityFrameworkDbContextGenerationService(RoslynSolutionContext roslynSolutionContext,
-            FileHelperService fileHelperService,
-            GenerationContext context
-        ) : base(roslynSolutionContext, fileHelperService, context)
+        public static async Task AppendDbSetToDatabaseContext(this GenerationService service)
         {
-        }
-
-        public async Task Generate()
-        {
-            await GenerateEntityMappingConfiguration();
-
-        }
-
-        public async Task GenerateEntityMappingConfiguration()
-        {
-            var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("Data");
+            var roslynProjectContext = service.RoslynSolutionContext.GetRoslynProjectContextFor("Data");
             var entity = await roslynProjectContext.GetClassEndingWithName("DbContext");
             if (entity == null)
             {
@@ -37,7 +18,9 @@ namespace Pdbc.Cli.App.Roslyn.Generation
 
             var fullFilename = entity.SyntaxTree.FilePath;
 
-            entity = await Save(entity, new PropertyDeclarationSyntaxBuilder().WithName(_generationContext.PluralEntityName).ForType($"DbSet<{_generationContext.EntityName}>"), fullFilename);
+            entity = await service.Save(entity, new PropertyDeclarationSyntaxBuilder()
+                .WithName(service.GenerationContext.PluralEntityName)
+                .ForType($"DbSet<{service.GenerationContext.EntityName}>"), fullFilename);
 
             #region comment AddProperty on specific location in file
             //// Get all classes from the project

@@ -3,10 +3,19 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using CommandLine;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Pdbc.Cli.App.Context;
 using Pdbc.Cli.App.Model;
 using Pdbc.Cli.App.Roslyn;
 using Pdbc.Cli.App.Roslyn.Generation;
+using Pdbc.Cli.App.Roslyn.Generation.Api;
+using Pdbc.Cli.App.Roslyn.Generation.Controller;
+using Pdbc.Cli.App.Roslyn.Generation.Cqrs;
+using Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests;
+using Pdbc.Cli.App.Roslyn.Generation.Dto;
+using Pdbc.Cli.App.Roslyn.Generation.Entity;
+using Pdbc.Cli.App.Roslyn.Generation.IntegrationTests;
+using Pdbc.Cli.App.Roslyn.Generation.Services;
 using Pdbc.Cli.App.Services;
 
 namespace Pdbc.Cli.App
@@ -26,9 +35,10 @@ namespace Pdbc.Cli.App
 
             var startupParameter = new StartupParameters
             {
-                EntityName = "Route",
-                PluralEntityName = "Routes",
-                Action = "Store"
+                EntityName = "Address",
+                PluralEntityName = "Addresses",
+                //Action = "List"
+                Action = "Get"
             };
 
             RunOptions(startupParameter);
@@ -56,7 +66,7 @@ namespace Pdbc.Cli.App
             }
 
             // TODO Fix paths
-            cliConfiguration.BasePath = @"C:\repos\Development\Aertssen.Framework.Templates\demo\core1";
+            cliConfiguration.BasePath = @"C:\repos\Development\Aertssen.Framework.Templates\demo\locations";
             cliConfiguration.ApplicationName = "Locations";
             cliConfiguration.RootNamespace = "Locations";
 
@@ -67,79 +77,95 @@ namespace Pdbc.Cli.App
             var roslySolutionContext = new RoslynSolutionContext(solutionPath, cliConfiguration);
             Console.WriteLine($"Parsed the solution {solutionPath} to setup the workspace");
             
-            // Generation Context (how will we handle multipe context (for example LIST/GET/STORE/DELETE in one go)
+            // Generation Context (how will we handle multiple context (for example LIST/GET/STORE/DELETE in one go)
             var generationContext = new GenerationContext(startupParameters, cliConfiguration);
 
-
-            var entityGenerationService = new EntityGenerationService(roslySolutionContext, fileHelperService, generationContext);
-            entityGenerationService.Generate()
+            Generate(roslySolutionContext, fileHelperService, generationContext)
                 .GetAwaiter()
                 .GetResult();
-
-            var repositoryGenerationService = new RepositoryGenerationService(roslySolutionContext, fileHelperService, generationContext);
-            repositoryGenerationService.Generate()
-                .GetAwaiter()
-                .GetResult();
-
-            var entityFrameworkMappingGenerationService = new EntityFrameworkMappingGenerationService(roslySolutionContext, fileHelperService, generationContext);
-            entityFrameworkMappingGenerationService.Generate()
-                .GetAwaiter()
-                .GetResult();
-
-            var entityFrameworkDbContextGenerationService = new EntityFrameworkDbContextGenerationService(roslySolutionContext, fileHelperService, generationContext);
-            entityFrameworkDbContextGenerationService.Generate()
-                .GetAwaiter()
-                .GetResult();
-
-
-            if (generationContext.ShouldGenerateCqrs)
-            {
-                if (generationContext.RequiresActionDto)
-                {
-                    var entityActionDtoGenerationService = new EntityActionDtoGenerationService(roslySolutionContext, fileHelperService, generationContext);
-                    entityActionDtoGenerationService.Generate()
-                        .GetAwaiter()
-                        .GetResult();
-                }
-
-                if (generationContext.RequiresDataDto)
-                {
-                    var entityDataDtoGenerationService = new EntityDataDtoGenerationService(roslySolutionContext, fileHelperService, generationContext);
-                    entityDataDtoGenerationService.Generate()
-                        .GetAwaiter()
-                        .GetResult();
-                }
-
-                var cqrsGenerationService = new CqrsGenerationService(roslySolutionContext, fileHelperService, generationContext);
-                cqrsGenerationService.Generate()
-                    .GetAwaiter()
-                    .GetResult();
-
-                var requestsGenerationService = new RequestsGenerationService(roslySolutionContext, fileHelperService, generationContext);
-                requestsGenerationService.Generate()
-                    .GetAwaiter()
-                    .GetResult();
-
-                var servicesGenerationService = new ServicesGenerationService(roslySolutionContext, fileHelperService, generationContext);
-                servicesGenerationService.Generate()
-                    .GetAwaiter()
-                    .GetResult();
-
-                var integrationTestsGenerationService = new IntegrationTestsGenerationService(roslySolutionContext, fileHelperService, generationContext);
-                integrationTestsGenerationService.Generate()
-                    .GetAwaiter()
-                    .GetResult();
-            }
-
-            //var context = new RoslynGenerationContext();
-            //var codeGenerationService = new CodeGenerationService(roslySolutionContext,
-            //    startupParameters,
-            //    cliConfiguration);
-
-            //codeGenerationService.SetupEntity()
-            //                     .GetAwaiter()
-            //                     .GetResult();
         }
+
+        private static async Task Generate(RoslynSolutionContext roslySolutionContext,
+            FileHelperService fileHelperService, GenerationContext generationContext)
+        {
+            var generationService = new GenerationService(roslySolutionContext, fileHelperService, generationContext);
+
+            // Entity
+            await generationService.GenerateEntity();
+            await generationService.GenerateEntityUnitTest();
+            await generationService.GenerateEntityTestDataBuilder();
+
+            // Repository
+            await generationService.GenerateRepositoryInterface();
+            await generationService.GenerateRepositoryClass();
+            await generationService.GenerateRepositoryBaseIntegrationTests();
+            await generationService.GenerateRepositoryQueriesIntegrationTests();
+
+            // Entity Framework
+            await generationService.GenerateEntityMappingConfiguration();
+            await generationService.AppendDbSetToDatabaseContext();
+
+            // Cqrs
+            if (generationContext.ActionInfo.ShouldGenerateCqrs)
+            {
+                if (generationContext.ActionInfo.RequiresActionDto)
+                {
+                    await generationService.GenerateEntityActionInterfaceDto();
+                    await generationService.GenerateEntityActionClassDto();
+                }
+
+                if (generationContext.ActionInfo.RequiresDataDto)
+                {
+                    await generationService.GenerateEntityDataInterfaceDto();
+                    await generationService.GenerateEntityDataClassDto();
+                }
+
+                await generationService.GenerateCqrsInputClass();
+                await generationService.GenerateCqrsInputClassTestDataBuilder();
+
+                if (generationService.GenerationContext.ShouldGenerateCqrsOutputClass)
+                {
+                        await generationService.GenerateCqrsOutputClass();
+                }
+                await generationService.GenerateCqrsHandlerClass();
+                await generationService.GenerateCqrsHandlerUnitTestClass();
+
+                await generationService.GenerateCqrsValidatorClass();
+                await generationService.GenerateCqrsValidatorUnitTestClass();
+
+                //if (generationService.GenerationContext.RequiresFactory)
+                //{
+                //    await generationService.GenerateCqrsFactoryClass();
+                //    await generationService.GenerateCqrsFactoryUnitTestClass();
+                //}
+
+                //if (generationService.GenerationContext.RequiresChangesHandler)
+                //{
+                //    await generationService.GenerateCqrsChangesHandlerClass();
+                //    await generationService.GenerateCqrsChangesHandlerUnitTestClass();
+                //}
+
+
+                await generationService.GenerateApiRequestClass();
+                await generationService.GenerateApiRequestClassTestDataBuilder();
+                await generationService.GenerateApiResponseClass();
+                //await generationService.GenerateApiResponseClassTestDataBuilder();
+
+                await generationService.GenerateServiceContractInterface();
+                await generationService.GenerateWebApiServiceContractClass();
+                await generationService.GenerateCqrsServiceContractInterface();
+                await generationService.GenerateCqrsServiceContractClass();
+
+                await generationService.GenerateBaseServiceIntegrationTest();
+                await generationService.GenerateActionSpecificIntegrationTest();
+                await generationService.GenerateCqrsIntegrationTest();
+                await generationService.GenerateWebApiIntegrationTest();
+
+                await generationService.GenerateControllerAction();
+
+            }
+        }
+
     }
 
 }

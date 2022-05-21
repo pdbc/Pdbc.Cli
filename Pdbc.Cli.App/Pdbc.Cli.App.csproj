@@ -20,6 +20,8 @@
 
   <ItemGroup>
     <Compile Remove="RoslynGenerationContext.cs" />
+    <Compile Remove="Roslyn\Generation\Entity\EntityGenerationService.cs" />
+    <Compile Remove="Roslyn\Generation\RepositoryGenerationService.cs" />
     <Compile Remove="Visitors\MyRewriter.cs" />
   </ItemGroup>
 

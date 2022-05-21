@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Pdbc.Cli.App.Context;
 using Pdbc.Cli.App.Extensions;
 using Pdbc.Cli.App.Roslyn.Extensions;
 
@@ -12,6 +13,23 @@ namespace Pdbc.Cli.App.Roslyn.Builders
 {
     internal class ClassDeclarationSyntaxBuilder
     {
+
+        public static ClassDeclarationSyntaxBuilder ForBaseSpecification(string className, string @namespace)
+        {
+            return new ClassDeclarationSyntaxBuilder()
+                .WithName(className)
+                .ForNamespace(@namespace)
+                .AddUnitTestUsingStatement()
+                .AddBaseClass($"BaseSpecification")
+                .AddTestFixtureAttribute(true);
+        }
+        public static ClassDeclarationSyntaxBuilder ForTestDataBuilder(string className, string @namespace, string item)
+        {
+            return new ClassDeclarationSyntaxBuilder()
+                .WithName(className)
+                .ForNamespace(@namespace)
+                .AddBaseClass(item.ToBuilder());
+        }
         private String _namespace;
         public ClassDeclarationSyntaxBuilder ForNamespace(String @namespace)
         {
@@ -47,7 +65,15 @@ namespace Pdbc.Cli.App.Roslyn.Builders
             return this;
         }
 
-
+        public ClassDeclarationSyntaxBuilder AddControllersUsingStatements()
+        {
+            AddUsingStatement("Microsoft.AspNetCore.Authorization");
+            AddUsingStatement("Microsoft.AspNetCore.Mvc");
+            AddUsingStatement("Microsoft.Extensions.Logging");
+            AddUsingStatement("Aertssen.Framework.Api.Common.OData");
+            return this;
+            
+        }
         public ClassDeclarationSyntaxBuilder AddUsingAertssenFrameworkAuditModel()
         {
             AddUsingStatement("Aertssen.Framework.Audit.Core.Model.Base");
@@ -144,12 +170,20 @@ namespace Pdbc.Cli.App.Roslyn.Builders
         private bool _requiresHttpMethodAttribute;
         private String _route;
         private String _verb;
+        
         public ClassDeclarationSyntaxBuilder AddHttpMethodAttribute(string route, string verb)
         {
             _requiresHttpMethodAttribute = true;
             //[HttpAction("odata/assets", httpMethod: Method.Get)]
             _route = route;
             _verb = verb;
+            return this;
+        }
+
+        private IList<String> _attributes = new List<string>();
+        public ClassDeclarationSyntaxBuilder AddAttribute(string text)
+        {
+            _attributes.Add(text);
             return this;
         }
 
@@ -179,6 +213,15 @@ namespace Pdbc.Cli.App.Roslyn.Builders
             {
                 var httpMethoAttribute = $"HttpAction(\"{_route}\", Method.{_verb})";
                 classDeclaration = classDeclaration.AddAttribute(httpMethoAttribute);
+            }
+
+            if (_attributes.Any())
+            {
+                foreach (var attribute in _attributes)
+                {
+                    classDeclaration = classDeclaration.AddAttribute(attribute);
+                }
+
             }
             // Add class to namespace
             namespaceDeclaration = namespaceDeclaration.AddMembers(classDeclaration);

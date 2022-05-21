@@ -58,6 +58,13 @@ namespace Pdbc.Cli.App.Roslyn.Builders
             return this;
         }
 
+        public ConstructorDeclarationSyntaxBuilder AddStatement(string statement)
+        {
+            var statementSyntaxBuilder = new StatementSyntaxBuilder(statement);
+            _statements.Add(statementSyntaxBuilder);
+            return this;
+        }
+
         public ConstructorDeclarationSyntax Build()
         {
             var parameterList = ParameterList(SeparatedList<ParameterSyntax>());
@@ -68,6 +75,10 @@ namespace Pdbc.Cli.App.Roslyn.Builders
                         .WithType(SyntaxFactory.ParseTypeName(p.Type)));
             }
 
+            ConstructorDeclarationSyntax method = ConstructorDeclaration(_name)
+                .AddModifiers(Token(_modifier))
+                .WithParameterList(parameterList);
+
             var argumentList = ArgumentList(SeparatedList<ArgumentSyntax>());
             foreach (var p in _baseParameters)
             {
@@ -75,11 +86,12 @@ namespace Pdbc.Cli.App.Roslyn.Builders
                     argumentList.AddArguments(Argument(IdentifierName(p)));
             }
 
-            ConstructorDeclarationSyntax method = ConstructorDeclaration(_name)
-                .AddModifiers(Token(_modifier))
-                .WithParameterList(parameterList)
-                .WithInitializer(ConstructorInitializer(SyntaxKind.BaseConstructorInitializer)
+            if (_baseParameters.Any())
+            {
+                method = method.WithInitializer(ConstructorInitializer(SyntaxKind.BaseConstructorInitializer)
                     .WithArgumentList(argumentList));
+
+            }
 
             var syntaxList = new List<StatementSyntax>();
             foreach (var s in _statements)

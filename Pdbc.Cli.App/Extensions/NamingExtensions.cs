@@ -11,6 +11,20 @@ namespace Pdbc.Cli.App.Extensions
 
             return $"{name}{subname}Specification";
         }
+
+        public static String ToDbContext(this string name)
+        {
+            return $"{name}DbContext";
+        }
+
+        public static String ToController(this string name)
+        {
+            return $"{name}Controller";
+        }
+        public static String ToDataDto(this string name)
+        {
+            return $"{name}DataDto";
+        }
         public static String ToHandler(this string name)
         {
             return $"{name}Handler";
@@ -67,8 +81,6 @@ namespace Pdbc.Cli.App.Extensions
         {
             return $"{type}Builder";
         }
-
-
     }
 
     public static class StringExtensions

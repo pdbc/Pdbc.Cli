@@ -13,6 +13,55 @@ namespace Pdbc.Cli.App.Roslyn.Builders
 {
     public class MethodDeclarationSyntaxBuilder
     {
+        public static MethodDeclarationSyntaxBuilder OperationNameMethodAsync(string operationName, string requestType, string resultType)
+        {
+            return new MethodDeclarationSyntaxBuilder()
+                .WithName(operationName)
+                .WithReturnType($"Task<{resultType}>")
+                .AddParameter(requestType, "request")
+                .Async();
+        }
+
+        public static MethodDeclarationSyntaxBuilder UnitTestEstablishContext()
+        {
+            return new MethodDeclarationSyntaxBuilder()
+                .WithName("Establish_context")
+                .IsOverride(true)
+                .WithModifier(SyntaxKind.ProtectedKeyword)
+                .AddStatement(new StatementSyntaxBuilder().AddStatement("base.Establish_context();"));
+        }
+        public static MethodDeclarationSyntaxBuilder UnitTestBecause()
+        {
+            return new MethodDeclarationSyntaxBuilder()
+                .WithName("Because")
+                .IsOverride(true)
+                .WithModifier(SyntaxKind.ProtectedKeyword);
+        }
+
+        public static MethodDeclarationSyntaxBuilder CqrsHandleMethod(string requestType, string resultType)
+        {
+            return new MethodDeclarationSyntaxBuilder()
+                .WithName("Handle")
+                .Async()
+                .WithReturnType($"Task<{resultType}>")
+                .AddParameter(requestType, "request")
+                .AddParameter("CancellationToken", "cancellationToken");
+        }
+
+        public static MethodDeclarationSyntaxBuilder AssertionFailedTestMethod(string name)
+        {
+            return MethodDeclarationSyntaxBuilder.UnitTestMethod(name)
+                .ThrowsNewNotImplementedException();
+        }
+
+        public static MethodDeclarationSyntaxBuilder UnitTestMethod(string name)
+        {
+            return new MethodDeclarationSyntaxBuilder()
+                .WithName(name)
+                .AddTestAttribute(true);
+        }
+
+
         public String GetIdentifier()
         {
             return _name;
@@ -73,7 +122,12 @@ namespace Pdbc.Cli.App.Roslyn.Builders
             return this;
         }
 
-
+        private IList<String> _attributes = new List<String>();
+        public MethodDeclarationSyntaxBuilder AddAttribute(string attribute)
+        {
+            _attributes.Add(attribute);
+            return this;
+        }
 
 
         private bool _isUnitTestMethod;
@@ -111,6 +165,16 @@ namespace Pdbc.Cli.App.Roslyn.Builders
             if (_isUnitTestMethod)
             {
                 method = method.AddAttribute("Test");
+            }
+
+
+            if (_attributes.Any())
+            {
+                foreach (var a in _attributes)
+                {
+                    method = method.AddAttribute(a);
+                }
+                
             }
 
             if (_isAbstract || _isInterfaceMethod)
@@ -164,7 +228,12 @@ namespace Pdbc.Cli.App.Roslyn.Builders
             _statements.Add(statementSyntaxBuilder);
             return this;
         }
-
+        public MethodDeclarationSyntaxBuilder AddStatement(string statement)
+        {
+            var statementSyntaxBuilder = new StatementSyntaxBuilder(statement);
+            _statements.Add(statementSyntaxBuilder);
+            return this;
+        }
 
 
         public MethodDeclarationSyntaxBuilder ReturnsTrue()

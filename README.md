@@ -4,6 +4,7 @@ Cli for class generation (roslyn)
 
 ## Cli
 
+aercli.exe -e Route -p Routes -a Store
 
 ## Getting started
 
@@ -27,3 +28,5 @@ DTO
  - 
  - add the properties to the dto objects
  - implement the test data builder (to generate default entities)
+
+

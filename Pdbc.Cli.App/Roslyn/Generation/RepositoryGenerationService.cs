@@ -12,7 +12,7 @@ using Pdbc.Cli.App.Services;
 
 namespace Pdbc.Cli.App.Roslyn.Generation
 {
-    public class RepositoryGenerationService : BaseGenerationService
+    public class RepositoryGenerationService : GenerationService
     {
         public RepositoryGenerationService(RoslynSolutionContext roslynSolutionContext,
                 FileHelperService fileHelperService,
@@ -32,10 +32,10 @@ namespace Pdbc.Cli.App.Roslyn.Generation
 
         public async Task GenerateRepositoryInterface()
         {
-            var className = _generationContext.EntityName.ToRepositoryInterface();
+            var className = GenerationContext.EntityName.ToRepositoryInterface();
             var subfolders = new[] { "Repositories" };
 
-            var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("Data");
+            var roslynProjectContext = RoslynSolutionContext.GetRoslynProjectContextFor("Data");
             var fullFilename = roslynProjectContext.GetFullFilenameFor(className, subfolders);
 
             var entity = await roslynProjectContext.GetInterfaceByName(className);
@@ -53,21 +53,21 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 .AddUsingStatement("System")
                 .AddUsingAertssenFrameworkAuditModel()
                 .AddUsingAertssenFrameworkRepositories()
-                .AddUsingStatement(_generationContext.GetNamespaceForDomainModel())
-                .AddBaseClass($"IEntityRepository<{_generationContext.EntityName}>")
+                .AddUsingStatement(GenerationContext.GetNamespaceForDomainModel())
+                .AddBaseClass($"IEntityRepository<{GenerationContext.EntityName}>")
                 .Build();
 
-            await _fileHelperService.WriteFile(fullFilename, entity);
+            await FileHelperService.WriteFile(fullFilename, entity);
 
 
         }
 
         private async Task GenerateRepositoryClass()
         {
-            var className = _generationContext.EntityName.ToRepository();
+            var className = GenerationContext.EntityName.ToRepository();
             var subfolders = new[] { "Repositories" };
 
-            var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("Data");
+            var roslynProjectContext = RoslynSolutionContext.GetRoslynProjectContextFor("Data");
             var fullFilename = roslynProjectContext.GetFullFilenameFor(className, subfolders);
 
             var entity = await roslynProjectContext.GetClassByName(className);
@@ -83,17 +83,17 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 .ForNamespace(entityNamespace)
                 .AddUsingStatement("System")
                 .AddUsingAertssenFrameworkRepositories()
-                .AddUsingStatement(_generationContext.GetNamespaceForDomainModel())
+                .AddUsingStatement(GenerationContext.GetNamespaceForDomainModel())
                 .AddUsingAertssenFrameworkAuditModel()
-                .AddBaseClass($"EntityFrameworkRepository<{_generationContext.EntityName}>")
-                .AddBaseClass(_generationContext.EntityName.ToRepositoryInterface())
+                .AddBaseClass($"EntityFrameworkRepository<{GenerationContext.EntityName}>")
+                .AddBaseClass(GenerationContext.EntityName.ToRepositoryInterface())
                 .Build();
 
-            await _fileHelperService.WriteFile(fullFilename, entity);
+            await FileHelperService.WriteFile(fullFilename, entity);
 
 
             entity = await Save(entity, new ConstructorDeclarationSyntaxBuilder().WithName(className)
-                    .AddParameter(_generationContext.DbContextName, "context")
+                    .AddParameter(GenerationContext.DbContextName, "context")
                     .AddBaseParameter("context")
                 ,
                 fullFilename);
@@ -102,12 +102,12 @@ namespace Pdbc.Cli.App.Roslyn.Generation
 
         public async Task GenerateRepositoryBaseIntegrationTests()
         {
-            var className = _generationContext.EntityName.ToRepository()
+            var className = GenerationContext.EntityName.ToRepository()
                                                          .ToSpecification();
             var subfolders = new[] { "Repositories" };
 
 
-            var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("IntegrationTests.Data");
+            var roslynProjectContext = RoslynSolutionContext.GetRoslynProjectContextFor("IntegrationTests.Data");
             var fullFilename = roslynProjectContext.GetFullTestsFilenameFor(className, subfolders);
 
             var entity = await roslynProjectContext.GetClassByName(className);
@@ -122,37 +122,37 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 .WithName(className)
                 .ForNamespace(entityNamespace)
                 .AddUsingAertssenFrameworkRepositories()
-                .AddUsingStatement(_generationContext.GetNamespaceForDomainModel())
-                .AddUsingStatement(_generationContext.GetNamespaceForDomainModelHelpers())
+                .AddUsingStatement(GenerationContext.GetNamespaceForDomainModel())
+                .AddUsingStatement(GenerationContext.GetNamespaceForDomainModelHelpers())
                 .AddUsingAertssenFrameworkAuditModel()
                 .AddUnitTestUsingStatement()
 
 
-                .AddBaseClass($"BaseRepositorySpecification<{_generationContext.EntityName}>")
+                .AddBaseClass($"BaseRepositorySpecification<{GenerationContext.EntityName}>")
                 .Build();
 
-            await _fileHelperService.WriteFile(fullFilename, entity);
+            await FileHelperService.WriteFile(fullFilename, entity);
 
 
-            entity = await Save(entity, new MethodDeclarationSyntaxBuilder().WithName("CreateExistingItem").WithReturnType(_generationContext.EntityName)
+            entity = await Save(entity, new MethodDeclarationSyntaxBuilder().WithName("CreateExistingItem").WithReturnType(GenerationContext.EntityName)
                     .IsOverride(true)
                     .WithModifier(SyntaxKind.ProtectedKeyword)
                     .AddStatement(new StatementSyntaxBuilder()
-                        .ThatReturnsAndObject($"{_generationContext.EntityName}TestDataBuilder"))
+                        .ThatReturnsAndObject($"{GenerationContext.EntityName}TestDataBuilder"))
                     ,
                 fullFilename);
 
-            entity = await Save(entity, new MethodDeclarationSyntaxBuilder().WithName("CreateNewItem").WithReturnType(_generationContext.EntityName)
+            entity = await Save(entity, new MethodDeclarationSyntaxBuilder().WithName("CreateNewItem").WithReturnType(GenerationContext.EntityName)
                     .IsOverride(true)
                     .WithModifier(SyntaxKind.ProtectedKeyword)
                     .AddStatement(new StatementSyntaxBuilder()
-                        .ThatReturnsAndObject($"{_generationContext.EntityName}TestDataBuilder"))
+                        .ThatReturnsAndObject($"{GenerationContext.EntityName}TestDataBuilder"))
                 ,
                 fullFilename);
 
             entity = await Save(entity, new MethodDeclarationSyntaxBuilder().WithName("EditItem")
                     .IsOverride(true)
-                    .AddParameter(_generationContext.EntityName, "item")
+                    .AddParameter(GenerationContext.EntityName, "item")
                     .WithModifier(SyntaxKind.ProtectedKeyword)
                     .ThrowsNewNotImplementedException()
                 ,
@@ -174,10 +174,10 @@ namespace Pdbc.Cli.App.Roslyn.Generation
 
         public async Task GenerateRepositoryQueriesIntegrationTests()
         {
-            var className = _generationContext.EntityName.ToRepository().ToSpecification("Queries");
+            var className = GenerationContext.EntityName.ToRepository().ToSpecification("Queries");
             var subfolders = new[] { "Extensions" };
 
-            var roslynProjectContext = _roslynSolutionContext.GetRoslynProjectContextFor("IntegrationTests.Data");
+            var roslynProjectContext = RoslynSolutionContext.GetRoslynProjectContextFor("IntegrationTests.Data");
             var fullFilename = roslynProjectContext.GetFullTestsFilenameFor(className, subfolders);
 
             var entity = await roslynProjectContext.GetClassByName(className);
@@ -193,16 +193,16 @@ namespace Pdbc.Cli.App.Roslyn.Generation
                 .ForNamespace(entityNamespace)
                 
                 .AddUsingAertssenFrameworkRepositories()
-                .AddUsingStatement(_generationContext.GetNamespaceForDataRepositories())
-                .AddUsingStatement(_generationContext.GetNamespaceForIntegationTestDataExtensions())
-                .AddUsingStatement(_generationContext.GetNamespaceForDomainModel())
-                .AddUsingStatement(_generationContext.GetNamespaceForDomainModelHelpers())
+                .AddUsingStatement(GenerationContext.GetNamespaceForDataRepositories())
+                .AddUsingStatement(GenerationContext.GetNamespaceForIntegationTestDataExtensions())
+                .AddUsingStatement(GenerationContext.GetNamespaceForDomainModel())
+                .AddUsingStatement(GenerationContext.GetNamespaceForDomainModelHelpers())
                 .AddUnitTestUsingStatement()
                 .AddUsingAertssenFrameworkAuditModel()
-                .AddBaseClass($"BaseRepositoryExtensionsSpecification<{_generationContext.EntityName.ToRepositoryInterface()}>")
+                .AddBaseClass($"BaseRepositoryExtensionsSpecification<{GenerationContext.EntityName.ToRepositoryInterface()}>")
                 .Build();
 
-            await _fileHelperService.WriteFile(fullFilename, entity);
+            await FileHelperService.WriteFile(fullFilename, entity);
 
             entity = await Save(entity, new MethodDeclarationSyntaxBuilder()
                     .WithName("Verify_extension_queries")

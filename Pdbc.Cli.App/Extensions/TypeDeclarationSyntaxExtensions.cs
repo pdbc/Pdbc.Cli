@@ -75,26 +75,17 @@ namespace Pdbc.Cli.App.Extensions
         }
 
 
-        public static ClassDeclarationSyntax AddPropertyToClassIfNotExists(this ClassDeclarationSyntax entity, PropertyDeclarationSyntaxBuilder propertyBuilder)
-        {
-            var identifier = propertyBuilder.GetIdentifier();
-            if (!entity.IsPropertyDefined(identifier))
-            {
-              entity = entity.AppendMember<ClassDeclarationSyntax>(propertyBuilder.Build());
-            }
+        //public static ClassDeclarationSyntax AddPropertyIfNotExists(this ClassDeclarationSyntax entity, PropertyDeclarationSyntaxBuilder propertyBuilder)
+        //{
+        //    var identifier = propertyBuilder.GetIdentifier();
+        //    if (!entity.IsPropertyDefined(identifier))
+        //    {
+        //      entity = entity.AppendMember<ClassDeclarationSyntax>(propertyBuilder.Build());
+        //    }
 
-            return entity;
-        }
-        public static ClassDeclarationSyntax AddMethodToClassIfNotExists(this ClassDeclarationSyntax entity, MethodDeclarationSyntaxBuilder methodBuilder)
-        {
-            var identifier = methodBuilder.GetIdentifier();
-            if (!entity.IsMethodDefined(identifier))
-            {
-                entity = entity.AppendMember<ClassDeclarationSyntax>(methodBuilder.Build());
-            }
+        //    return entity;
+        //}
 
-            return entity;
-        }
 
         public static InterfaceDeclarationSyntax AddMethodToInterfaceIfNotExists(this InterfaceDeclarationSyntax entity, MethodDeclarationSyntaxBuilder methodBuilder)
         {
@@ -123,16 +114,6 @@ namespace Pdbc.Cli.App.Extensions
 
             return entity;
         }
-        public static ClassDeclarationSyntax AddConstructorToClassIfNotExists(this ClassDeclarationSyntax entity, ConstructorDeclarationSyntaxBuilder constructorBuilder)
-        {
-            var identifier = constructorBuilder.GetIdentifier();
-            if (!entity.IsConstructorDefined(identifier))
-            {
-                entity = entity.AppendMember<ClassDeclarationSyntax>(constructorBuilder.Build());
-            }
-
-            return entity;
-        }
         public static T AppendMember<T>(this TypeDeclarationSyntax syntax, MemberDeclarationSyntax memberDeclarationSyntax) where T : TypeDeclarationSyntax
         {
             var members = syntax.Members.Add(memberDeclarationSyntax);
@@ -140,7 +121,71 @@ namespace Pdbc.Cli.App.Extensions
         }
 
 
-
         
+
+        public static TSyntax AddVariableIfNotExists<TSyntax>(this TSyntax entity, 
+            VariableDeclarationSyntaxBuilder b, 
+            out bool isAltered) 
+            where TSyntax : TypeDeclarationSyntax
+        {
+            isAltered = false;
+            var identifier = b.GetIdentifier();
+            if (!entity.IsVariableDefined(identifier))
+            {
+                isAltered = true;
+                entity = entity.AppendMember<TSyntax>(b.Build());
+            }
+
+            return entity;
+        }
+        
+        public static TSyntax AddPropertyIfNotExists<TSyntax>(this TSyntax entity, 
+            PropertyDeclarationSyntaxBuilder propertyBuilder, 
+            out bool isAltered) 
+            where TSyntax : TypeDeclarationSyntax
+        {
+            isAltered = false;
+            var identifier = propertyBuilder.GetIdentifier();
+            if (!entity.IsPropertyDefined(identifier))
+            {
+                isAltered = true;
+                entity = entity.AppendMember<TSyntax>(propertyBuilder.Build());
+            }
+
+            return entity;
+        }
+
+        public static TSyntax AddMethodToClassIfNotExists<TSyntax>(this TSyntax entity, 
+            MethodDeclarationSyntaxBuilder methodBuilder,
+            out bool isAltered)
+            where TSyntax : TypeDeclarationSyntax
+        {
+            isAltered = false;
+            var identifier = methodBuilder.GetIdentifier();
+            if (!entity.IsMethodDefined(identifier))
+            {
+                isAltered = true;
+                entity = entity.AppendMember<TSyntax>(methodBuilder.Build());
+            }
+
+            return entity;
+        }
+
+        public static TSyntax AddConstructorToClassIfNotExists<TSyntax>(this TSyntax entity, 
+            ConstructorDeclarationSyntaxBuilder constructorBuilder,
+            out bool isAltered)
+            where TSyntax : TypeDeclarationSyntax
+        {
+            isAltered = false;
+            var identifier = constructorBuilder.GetIdentifier();
+            if (!entity.IsConstructorDefined(identifier))
+            {
+                isAltered = true;
+                entity = entity.AppendMember<TSyntax>(constructorBuilder.Build());
+            }
+
+            return entity;
+        }
+
     }
 }

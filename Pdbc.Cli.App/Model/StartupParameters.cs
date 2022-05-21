@@ -32,8 +32,8 @@ namespace Pdbc.Cli.App.Model
         [Option('a', "action", Required = false, HelpText = "The action you want to generate for the entity.")]
         public String Action { get; set; }
 
-        [Option('r', "withoutResponse", Required = false, HelpText = "Indicates that the action should not return a response (only for commands).")]
-        public Boolean WithoutResponse { get; set; }
+        [Option('r', "returnDataDto", Required = false, HelpText = "Indicates that the action should return a response (only for commands, which by default return nothing).", Default = false)]
+        public Boolean ReturnDataDto { get; set; }
 
 
         public void WriteParameters()
@@ -44,6 +44,7 @@ namespace Pdbc.Cli.App.Model
             Console.WriteLine("Optional Startup Parameters");
             Console.WriteLine($" == PluralEntityName: {PluralEntityName}");
             Console.WriteLine($" == Action: {Action}");
+            Console.WriteLine($" == ReturnDataDto: {ReturnDataDto}");
         }
 
     }
