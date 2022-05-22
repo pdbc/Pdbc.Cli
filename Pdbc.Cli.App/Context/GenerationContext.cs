@@ -16,10 +16,9 @@ namespace Pdbc.Cli.App.Context
             Parameters = parameters;
             Configuration = configuration;
 
-            BuildActionInfo();
+            ActionInfo = new ActionInfoFactory().BuildActionInfoFor(this);
         }
 
-        
         public String EntityName => Parameters.EntityName;
         public String PluralEntityName => Parameters.PluralEntityName;
         public String ActionName => Parameters.Action;
@@ -27,125 +26,9 @@ namespace Pdbc.Cli.App.Context
         public string RootNamespace => Configuration.RootNamespace;
         public String ApplicationName => Configuration.ApplicationName;
 
-        public ActionInfo ActionInfo { get; set; }
+        public IActionInfo ActionInfo { get; set; }
 
-        private void BuildActionInfo()
-        {
-            ActionInfo = new ActionInfo(this);
-
-            if (String.IsNullOrEmpty(Parameters.Action))
-            {
-                //ShouldGenerateCqrs = false;
-
-                //ActionInfo = ActionInfoItems.NullActionInfo;
-                return;
-            }
-
-            
-            ////ShouldGenerateCqrs = true;
-
-            //ApiRequestBaseClassName = "AertssenRequest";
-            //ApiResponseBaseClassName = "AertssenResponse";
-            //ActionOperationName = $"{ActionName}{EntityName}";
-
-            //RequiresFactory = false;
-            //RequiresDataDto = false;
-            //RequiresChangesHandler = false;
-
-            ////IsListAction = false;
-            ////IsGetAction = false;
-            ////IsDeleteAction = false;
-            ////IsStoreAction = false;
-            ////IsCreateAction = false;
-            ////IsUpdateAction = false;
-            ////IsWithoutResponse = false;
-
-            //ShouldGenerateCqrsOutputClass = true;
-
-            //switch (ActionName)
-            //{
-            //    case "Get":
-            //        RequiresDataDto = true;
-            //        //CqrsInputType = "Query";
-            //        //CqrsOutputType = "ViewModel";
-            //        IsGetAction = true;
-
-            //        break;
-
-            //    case "List":
-            //        RequiresDataDto = true;
-            //        //CqrsInputType = "Query";
-            //        //CqrsOutputType = "ViewModel";
-            //        IsListAction = true;
-            //        ShouldGenerateCqrsOutputClass = false;
-
-            //       ApiRequestBaseClassName = "AertssenListRequest";
-            //        ApiResponseBaseClassName = $"AertssenListResponse<{this.DataDtoClass}>";
-            //        ActionOperationName = $"{ActionName}{PluralEntityName}";
-            //        break;
-
-            //    case "Store":
-            //        //CqrsInputType = "Command";
-            //        //CqrsOutputType = "Result";
-            //        RequiresFactory = true;
-            //        RequiresChangesHandler = true;
-            //        //RequiresActionDto = true;
-            //        IsStoreAction = true;
-
-            //        //IsWithoutResponse = Parameters.WithoutResponse;
-            //        //ShouldGenerateCqrsOutputClass = !IsWithoutResponse;
-            //        //if (!Parameters.WithoutResponse)
-            //        //{
-            //        //    RequiresDataDto = true;
-            //        //}
-            //        break;
-
-            //    case "Create":
-            //        //CqrsInputType = "Command";
-            //        //CqrsOutputType = "Result";
-            //        RequiresFactory = true;
-            //        //RequiresActionDto = true;
-            //        IsCreateAction = true;
-
-            //        //IsWithoutResponse = Parameters.WithoutResponse;
-            //        //ShouldGenerateCqrsOutputClass = !IsWithoutResponse;
-            //        //if (!Parameters.WithoutResponse)
-            //        //{
-            //        //    RequiresDataDto = true;
-            //        //}
-            //        break;
-
-            //    case "Update":
-            //        //CqrsInputType = "Command";
-            //        //CqrsOutputType = "Result";
-            //        RequiresChangesHandler = true;
-            //        //RequiresActionDto = true;
-            //        IsUpdateAction = true;
-
-            //        //IsWithoutResponse = Parameters.WithoutResponse;
-            //        //ShouldGenerateCqrsOutputClass = !IsWithoutResponse;
-            //        //if (!Parameters.WithoutResponse)
-            //        //{
-            //        //    RequiresDataDto = true;
-            //        //}
-
-            //        break;
-
-            //    case "Delete":
-            //        //CqrsInputType = "Command";
-            //        //CqrsOutputType = "Result";
-            //        IsDeleteAction = true;
-            //        IsWithoutResponse = true;
-            //        ShouldGenerateCqrsOutputClass = !IsWithoutResponse;
-
-            //        break;
-            //    default:
-
-            //        break;
-            //}
-
-        }
-        
+  
 
         //public String ActionName { get; private set; }
         //public String FullActionName { get; private set; }
@@ -156,9 +39,9 @@ namespace Pdbc.Cli.App.Context
 
         //public Boolean ShouldGenerateCqrs { get; private set; }
         //public Boolean RequiresActionDto { get; private set; }
-        public Boolean RequiresDataDto { get; private set; }
-        public Boolean RequiresFactory { get; private set; }
-        public Boolean RequiresChangesHandler { get; private set; }
+        //public Boolean RequiresDataDto { get; private set; }
+        //public Boolean RequiresFactory { get; private set; }
+        //public Boolean RequiresChangesHandler { get; private set; }
         
 
         //public String ApiRequestBaseClassName { get; private set; }
@@ -178,9 +61,9 @@ namespace Pdbc.Cli.App.Context
         //public Boolean IsWithoutResponse { get; private set; }
         //#endregion
 
-        #region Filtering of class generation
-        public Boolean ShouldGenerateCqrsOutputClass { get; private set; }
-        #endregion
+        //#region Filtering of class generation
+        //public Boolean ShouldGenerateCqrsOutputClass { get; private set; }
+        //#endregion
 
 
 
@@ -189,11 +72,11 @@ namespace Pdbc.Cli.App.Context
 
 
         #region DTO
-        public string ActionDtoClass => $"{ActionInfo.EntityActionName}Dto";
-        public string ActionDtoInterface => ActionDtoClass.ToInterface();
+        //public string ActionDtoClass => $"{ActionInfo.EntityActionName}Dto";
+        //public string ActionDtoInterface => ActionDtoClass.ToInterface();
 
-        public string DataDtoClass => $"{EntityName}DataDto";
-        public string DataDtoInterface => DataDtoClass.ToInterface();
+        //public string DataDtoClass => $"{EntityName}DataDto";
+        //public string DataDtoInterface => DataDtoClass.ToInterface();
         #endregion
 
         #region CQRS
@@ -201,22 +84,22 @@ namespace Pdbc.Cli.App.Context
         //public string CqrsInputClassName => $"{ActionEntityName}{CqrsInputType}";
         //public string CqrsOutputClassName => $"{ActionEntityName}{CqrsOutputType}";
 
-        public string GetCqrsOutputClassNameBasedOnAction()
-        {
-            var outputCqrsOutputClassName = ActionInfo.CqrsOutputClassName;
-            if (ActionInfo.IsListAction)
-            {
-                outputCqrsOutputClassName = $"IQueryable<{DataDtoClass}>";
-                return outputCqrsOutputClassName;
-            }
+        //public string GetCqrsOutputClassNameBasedOnAction()
+        //{
+        //    var outputCqrsOutputClassName = ActionInfo.CqrsOutputClassName;
+        //    if (ActionInfo.IsListAction)
+        //    {
+        //        outputCqrsOutputClassName = $"IQueryable<{EntityName.ToDataDto()}>";
+        //        return outputCqrsOutputClassName;
+        //    }
 
-            if (!this.ShouldGenerateCqrsOutputClass)
-            {
-                return "Nothing";
-            }
+        //    //if (!this.ShouldGenerateCqrsOutputClass)
+        //    //{
+        //    //    return "Nothing";
+        //    //}
 
-            return outputCqrsOutputClassName;
-        }
+        //    return outputCqrsOutputClassName;
+        //}
         public string CqrsHandlerClassName => ActionInfo.CqrsInputClassName.ToHandler();
         public string CqrsValidatorClassName => ActionInfo.CqrsInputClassName.ToValidator();
         public string CqrsFactoryClassName => ActionInfo.CqrsInputClassName.ToFactory();
@@ -226,17 +109,17 @@ namespace Pdbc.Cli.App.Context
         #region Api
 
 
-        public string GetApiOutputClassNameBasedOnAction()
-        {
-            var outputCqrsOutputClassName = ActionInfo.RequestOutputClassName;
+        //public string GetApiOutputClassNameBasedOnAction()
+        //{
+        //    var outputCqrsOutputClassName = ActionInfo.ApiResponseClassName;
             
-            if (!this.ShouldGenerateCqrsOutputClass)
-            {
-                return "AertssenResponse";
-            }
+        //    //if (!this.ShouldGenerateCqrsOutputClass)
+        //    //{
+        //    //    return "AertssenResponse";
+        //    //}
 
-            return outputCqrsOutputClassName;
-        }
+        //    return outputCqrsOutputClassName;
+        //}
         #endregion
 
         #region Services
@@ -317,5 +200,124 @@ namespace Pdbc.Cli.App.Context
             }
             return string.Empty;
         }
+
+
+        //private void BuildActionInfo()
+        //{
+        //    ActionInfo = new ActionInfo(this);
+
+        //    if (String.IsNullOrEmpty(Parameters.Action))
+        //    {
+        //        //ShouldGenerateCqrs = false;
+
+        //        //ActionInfo = ActionInfoItems.NullActionInfo;
+        //        return;
+        //    }
+
+
+        //    ////ShouldGenerateCqrs = true;
+
+        //    //ApiRequestBaseClassName = "AertssenRequest";
+        //    //ApiResponseBaseClassName = "AertssenResponse";
+        //    //ActionOperationName = $"{ActionName}{EntityName}";
+
+        //    //RequiresFactory = false;
+        //    //RequiresDataDto = false;
+        //    //RequiresChangesHandler = false;
+
+        //    ////IsListAction = false;
+        //    ////IsGetAction = false;
+        //    ////IsDeleteAction = false;
+        //    ////IsStoreAction = false;
+        //    ////IsCreateAction = false;
+        //    ////IsUpdateAction = false;
+        //    ////IsWithoutResponse = false;
+
+        //    //ShouldGenerateCqrsOutputClass = true;
+
+        //    //switch (ActionName)
+        //    //{
+        //    //    case "Get":
+        //    //        RequiresDataDto = true;
+        //    //        //CqrsInputType = "Query";
+        //    //        //CqrsOutputType = "ViewModel";
+        //    //        IsGetAction = true;
+
+        //    //        break;
+
+        //    //    case "List":
+        //    //        RequiresDataDto = true;
+        //    //        //CqrsInputType = "Query";
+        //    //        //CqrsOutputType = "ViewModel";
+        //    //        IsListAction = true;
+        //    //        ShouldGenerateCqrsOutputClass = false;
+
+        //    //       ApiRequestBaseClassName = "AertssenListRequest";
+        //    //        ApiResponseBaseClassName = $"AertssenListResponse<{this.DataDtoClass}>";
+        //    //        ActionOperationName = $"{ActionName}{PluralEntityName}";
+        //    //        break;
+
+        //    //    case "Store":
+        //    //        //CqrsInputType = "Command";
+        //    //        //CqrsOutputType = "Result";
+        //    //        RequiresFactory = true;
+        //    //        RequiresChangesHandler = true;
+        //    //        //RequiresActionDto = true;
+        //    //        IsStoreAction = true;
+
+        //    //        //IsWithoutResponse = Parameters.WithoutResponse;
+        //    //        //ShouldGenerateCqrsOutputClass = !IsWithoutResponse;
+        //    //        //if (!Parameters.WithoutResponse)
+        //    //        //{
+        //    //        //    RequiresDataDto = true;
+        //    //        //}
+        //    //        break;
+
+        //    //    case "Create":
+        //    //        //CqrsInputType = "Command";
+        //    //        //CqrsOutputType = "Result";
+        //    //        RequiresFactory = true;
+        //    //        //RequiresActionDto = true;
+        //    //        IsCreateAction = true;
+
+        //    //        //IsWithoutResponse = Parameters.WithoutResponse;
+        //    //        //ShouldGenerateCqrsOutputClass = !IsWithoutResponse;
+        //    //        //if (!Parameters.WithoutResponse)
+        //    //        //{
+        //    //        //    RequiresDataDto = true;
+        //    //        //}
+        //    //        break;
+
+        //    //    case "Update":
+        //    //        //CqrsInputType = "Command";
+        //    //        //CqrsOutputType = "Result";
+        //    //        RequiresChangesHandler = true;
+        //    //        //RequiresActionDto = true;
+        //    //        IsUpdateAction = true;
+
+        //    //        //IsWithoutResponse = Parameters.WithoutResponse;
+        //    //        //ShouldGenerateCqrsOutputClass = !IsWithoutResponse;
+        //    //        //if (!Parameters.WithoutResponse)
+        //    //        //{
+        //    //        //    RequiresDataDto = true;
+        //    //        //}
+
+        //    //        break;
+
+        //    //    case "Delete":
+        //    //        //CqrsInputType = "Command";
+        //    //        //CqrsOutputType = "Result";
+        //    //        IsDeleteAction = true;
+        //    //        IsWithoutResponse = true;
+        //    //        ShouldGenerateCqrsOutputClass = !IsWithoutResponse;
+
+        //    //        break;
+        //    //    default:
+
+        //    //        break;
+        //    //}
+
+        //}
+
     }
 }

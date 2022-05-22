@@ -32,14 +32,14 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs
                     .AddUsingStatement(service.GenerationContext.GetNamespaceForDomainModel())
                     .AddUsingStatement(service.GenerationContext.GetNamespaceForDto())
                     .AddUsingAertssenFrameworkCqrsInfra()
-                    .AddBaseClass($"IFactory<{service.GenerationContext.ActionDtoInterface},{service.GenerationContext.EntityName}>")
+                    .AddBaseClass($"IFactory<{service.GenerationContext.ActionInfo.EntityActionName.ToDto().ToInterface()},{service.GenerationContext.EntityName}>")
                     .Build();
             }
 
             entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
                     .WithName("Create")
                     .WithReturnType(service.GenerationContext.EntityName)
-                    .AddParameter(service.GenerationContext.ActionDtoClass.ToInterface(), "model")
+                    .AddParameter(service.GenerationContext.ActionInfo.EntityActionName.ToDto().ToInterface(), "model")
                     .ThrowsNewNotImplementedException(),
                 fullFilename);
         }

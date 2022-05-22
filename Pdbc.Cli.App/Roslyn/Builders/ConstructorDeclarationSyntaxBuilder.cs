@@ -6,6 +6,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Pdbc.Cli.App.Extensions;
 using Pdbc.Cli.App.Model.Items;
+using Pdbc.Cli.App.Roslyn.Builders.SyntaxBuilders;
 using Pdbc.Cli.App.Roslyn.Extensions;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 

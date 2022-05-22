@@ -2,6 +2,7 @@
 using Pdbc.Cli.App.Context;
 using Pdbc.Cli.App.Extensions;
 using Pdbc.Cli.App.Roslyn.Builders;
+using Pdbc.Cli.App.Roslyn.Builders.SyntaxBuilders;
 using Pdbc.Cli.App.Roslyn.Extensions;
 
 namespace Pdbc.Cli.App.Roslyn.Generation.Services
@@ -50,27 +51,25 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Services
                 fullFilename);
 
             var operationName = service.GenerationContext.ActionInfo.ActionOperationName;
-            var requestType = service.GenerationContext.ActionInfo.RequestInputClassName;
-            var resultType = service.GenerationContext.ActionInfo.RequestOutputClassName;
+            var requestType = service.GenerationContext.ActionInfo.ApiRequestClassName;
+            var resultType = service.GenerationContext.ActionInfo.ApiResponseClassName;
+
             if (service.GenerationContext.ActionInfo.IsListAction)
             {
                 entity = await service.Save(entity, MethodDeclarationSyntaxBuilder.OperationNameMethodAsync(operationName,
                             requestType,
                             resultType)
-                       
-                        .AddStatement(new StatementSyntaxBuilder().AddStatement(
-                            $"return await GetAsyncOData<{requestType}, {resultType}, {service.GenerationContext.DataDtoClass}>(request); ")),
+                        .AddStatement(new StatementSyntaxBuilder(
+                            $"return await GetAsyncOData<{requestType}, {resultType}, {service.GenerationContext.EntityName.ToDataDto()}>(request); ")),
                     fullFilename);
             } 
             else if (service.GenerationContext.ActionInfo.IsGetAction)
             {
-                entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
-                        .WithName(service.GenerationContext.ActionInfo.ActionOperationName)
-                        .Async()
-                        .WithReturnType($"Task<{service.GenerationContext.GetApiOutputClassNameBasedOnAction()}>")
-                        .AddParameter(service.GenerationContext.ActionInfo.RequestInputClassName, "request")
-                        .AddStatement(new StatementSyntaxBuilder().AddStatement(
-                            $"return await GetAsync<{service.GenerationContext.GetApiOutputClassNameBasedOnAction()}>(request.Id.ToString());")),
+                entity = await service.Save(entity, MethodDeclarationSyntaxBuilder.OperationNameMethodAsync(operationName,
+                            requestType,
+                            resultType)
+                        .AddStatement(new StatementSyntaxBuilder(
+                            $"return await GetAsync<{service.GenerationContext.ActionInfo.ApiResponseClassName}>(request.Id.ToString());")),
                     fullFilename);
             }
             else if (service.GenerationContext.ActionInfo.IsDeleteAction)
@@ -79,10 +78,10 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Services
                 entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
                         .WithName(service.GenerationContext.ActionInfo.ActionOperationName)
                         .Async()
-                        .WithReturnType($"Task<{service.GenerationContext.GetApiOutputClassNameBasedOnAction()}>")
-                        .AddParameter(service.GenerationContext.ActionInfo.RequestInputClassName, "request")
-                        .AddStatement(new StatementSyntaxBuilder().AddStatement(
-                            $"return await DeleteAsync<{service.GenerationContext.GetApiOutputClassNameBasedOnAction()}>(request.Id.ToString());")),
+                        .WithReturnType($"Task<{service.GenerationContext.ActionInfo.ApiResponseClassNameOverride}>")
+                        .AddParameter(service.GenerationContext.ActionInfo.ApiRequestClassName, "request")
+                        .AddStatement(new StatementSyntaxBuilder(
+                            $"return await DeleteAsync<{service.GenerationContext.ActionInfo.ApiResponseClassNameOverride}>(request.Id.ToString());")),
                     fullFilename);
             }
             else if (service.GenerationContext.ActionInfo.IsStoreAction)
@@ -90,10 +89,10 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Services
                 entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
                         .WithName(service.GenerationContext.ActionInfo.ActionOperationName)
                         .Async()
-                        .WithReturnType($"Task<{service.GenerationContext.GetApiOutputClassNameBasedOnAction()}>")
-                        .AddParameter(service.GenerationContext.ActionInfo.RequestInputClassName, "request")
-                        .AddStatement(new StatementSyntaxBuilder().AddStatement(
-                            $"return await PostAsync<{service.GenerationContext.ActionInfo.RequestInputClassName},{service.GenerationContext.GetApiOutputClassNameBasedOnAction()}>(request);")),
+                        .WithReturnType($"Task<{service.GenerationContext.ActionInfo.ApiResponseClassNameOverride}>")
+                        .AddParameter(service.GenerationContext.ActionInfo.ApiRequestClassName, "request")
+                        .AddStatement(new StatementSyntaxBuilder(
+                            $"return await PostAsync<{service.GenerationContext.ActionInfo.ApiRequestClassName},{service.GenerationContext.ActionInfo.ApiResponseClassNameOverride}>(request);")),
                     fullFilename);
             }
         }

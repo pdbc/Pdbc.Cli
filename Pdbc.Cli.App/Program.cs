@@ -35,10 +35,12 @@ namespace Pdbc.Cli.App
 
             var startupParameter = new StartupParameters
             {
-                EntityName = "Address",
-                PluralEntityName = "Addresses",
+                EntityName = "Route",
+                PluralEntityName = "Routes",
                 //Action = "List"
-                Action = "Get"
+                //Action = "Get"
+                //Action = "Delete"
+                Action = "Store"
             };
 
             RunOptions(startupParameter);
@@ -123,7 +125,7 @@ namespace Pdbc.Cli.App
                 await generationService.GenerateCqrsInputClass();
                 await generationService.GenerateCqrsInputClassTestDataBuilder();
 
-                if (generationService.GenerationContext.ShouldGenerateCqrsOutputClass)
+                if (generationService.GenerationContext.ActionInfo.ShouldGenerateCqrsOutputClass)
                 {
                         await generationService.GenerateCqrsOutputClass();
                 }
@@ -133,22 +135,27 @@ namespace Pdbc.Cli.App
                 await generationService.GenerateCqrsValidatorClass();
                 await generationService.GenerateCqrsValidatorUnitTestClass();
 
-                //if (generationService.GenerationContext.RequiresFactory)
-                //{
-                //    await generationService.GenerateCqrsFactoryClass();
-                //    await generationService.GenerateCqrsFactoryUnitTestClass();
-                //}
+                if (generationService.GenerationContext.ActionInfo.RequiresFactory)
+                {
+                    await generationService.GenerateCqrsFactoryClass();
+                    await generationService.GenerateCqrsFactoryUnitTestClass();
+                }
 
-                //if (generationService.GenerationContext.RequiresChangesHandler)
-                //{
-                //    await generationService.GenerateCqrsChangesHandlerClass();
-                //    await generationService.GenerateCqrsChangesHandlerUnitTestClass();
-                //}
+                if (generationService.GenerationContext.ActionInfo.RequiresChangesHandler)
+                {
+                    await generationService.GenerateCqrsChangesHandlerClass();
+                    await generationService.GenerateCqrsChangesHandlerUnitTestClass();
+                }
 
 
                 await generationService.GenerateApiRequestClass();
                 await generationService.GenerateApiRequestClassTestDataBuilder();
-                await generationService.GenerateApiResponseClass();
+
+                if (!generationService.GenerationContext.ActionInfo.IsWithoutResponse)
+                {
+                    await generationService.GenerateApiResponseClass();
+                }
+
                 //await generationService.GenerateApiResponseClassTestDataBuilder();
 
                 await generationService.GenerateServiceContractInterface();

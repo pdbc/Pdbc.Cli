@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Pdbc.Cli.App.Context;
 using Pdbc.Cli.App.Extensions;
 using Pdbc.Cli.App.Roslyn.Builders;
+using Pdbc.Cli.App.Roslyn.Builders.SyntaxBuilders;
 using Pdbc.Cli.App.Roslyn.Extensions;
 
 namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
@@ -54,7 +55,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                     .IsOverride(true)
                     .WithReturnType(service.GenerationContext.ActionInfo.CqrsInputClassName)
                     .WithModifier(SyntaxKind.ProtectedKeyword)
-                    .AddStatement(new StatementSyntaxBuilder().AddStatement(
+                    .AddStatement(new StatementSyntaxBuilder(
                         $"return new {service.GenerationContext.ActionInfo.CqrsInputClassName.ToTestDataBuilder()}();"))
                 ,
                 fullFilename);
@@ -64,7 +65,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                     .IsOverride(true)
                     .WithReturnType(service.GenerationContext.EntityName)
                     .WithModifier(SyntaxKind.ProtectedKeyword)
-                    .AddStatement(new StatementSyntaxBuilder().AddStatement($"return null;"))
+                    .AddStatement(new StatementSyntaxBuilder($"return null;"))
                 ,
                 fullFilename);
 
@@ -74,7 +75,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                     .WithReturnType(service.GenerationContext.EntityName)
                     .WithModifier(SyntaxKind.ProtectedKeyword)
                     .AddStatement(
-                        new StatementSyntaxBuilder().AddStatement(
+                        new StatementSyntaxBuilder(
                             $"return new {service.GenerationContext.EntityName.ToTestDataBuilder()}();"))
                 ,
                 fullFilename);
@@ -83,7 +84,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                     .WithName("Verify_repository_called_to_load_the_entity")
                     .WithModifier(SyntaxKind.PublicKeyword)
                     .AddTestAttribute(true)
-                    .AddStatement(new StatementSyntaxBuilder().AddStatement(
+                    .AddStatement(new StatementSyntaxBuilder(
                         $"Repository.AssertWasCalled(x => x.GetById(Command.{service.GenerationContext.EntityName}.Id.Value));;"))
                 ,
                 fullFilename);
@@ -93,7 +94,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                     .WithName("Verify_changes_handler_called_to_update_the_object")
                     .WithModifier(SyntaxKind.PublicKeyword)
                     .AddTestAttribute(true)
-                    .AddStatement(new StatementSyntaxBuilder().AddStatement(
+                    .AddStatement(new StatementSyntaxBuilder(
                         $"ChangesHandler.AssertWasCalled(x => x.ApplyChanges(LoadedItem, Command.{service.GenerationContext.EntityName}));"))
                 ,
                 fullFilename);
@@ -103,7 +104,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                     .WithModifier(SyntaxKind.PublicKeyword)
                     .AddTestAttribute(true)
                     .AddStatement(
-                        new StatementSyntaxBuilder().AddStatement(
+                        new StatementSyntaxBuilder(
                             $"Repository.AssertWasCalled(x => x.Update(LoadedItem));"))
                 ,
                 fullFilename);
@@ -112,7 +113,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                     .WithName("Verify_dbcontextservice_called_to_savechanges")
                     .WithModifier(SyntaxKind.PublicKeyword)
                     .AddTestAttribute(true)
-                    .AddStatement(new StatementSyntaxBuilder().AddStatement(
+                    .AddStatement(new StatementSyntaxBuilder(
                         $"{service.GenerationContext.ApplicationName}DbContextService.AssertWasCalled(x => x.SaveChangesAsync(CancellationToken));"))
                 ,
                 fullFilename);

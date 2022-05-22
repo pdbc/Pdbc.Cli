@@ -73,6 +73,47 @@ namespace Pdbc.Cli.App.Roslyn.Generation
             return entity;
         }
 
+
+        public async Task<TSyntaxNode> AppendUsingStatement<TSyntaxNode>(TSyntaxNode entity,
+            string usingStatement,
+            string filename) where TSyntaxNode : TypeDeclarationSyntax
+        {
+            var originalNamespace = entity.GetParentNodeOfType<NamespaceDeclarationSyntax>();
+            var originalCompilationSyntax = originalNamespace.GetParentNodeOfType<CompilationUnitSyntax>();
+
+            foreach (UsingDirectiveSyntax usingDirectiveSyntax in originalCompilationSyntax.Usings)
+            {
+                var x = usingDirectiveSyntax.Name.ToFullString();
+                if (x == usingStatement)
+                    return entity;
+                //NameSyntax name = usingDirectiveSyntax.Name;
+
+                //if (name is IdentifierNameSyntax identifierNameSyntax)
+                //{
+                //    if (identifierNameSyntax.Identifier.ValueText == usingStatement)
+                //    {
+                //        return entity;
+                //    }
+                //}
+                //else
+                //{
+                //    if (name is QualifiedNameSyntax qualifiedNameSyntax)
+                //    {
+                //        var n = qualifiedNameSyntax.ToFullString();
+                //        //qualifiedNameSyntax.
+                //    }
+                //}
+            }
+
+            var updatedCompilationSyntax = originalCompilationSyntax.AddUsingStatements(usingStatement);
+
+            var code = updatedCompilationSyntax.NormalizeWhitespace().ToFullString();
+            await FileHelperService.WriteFile(filename, code);
+
+            return updatedCompilationSyntax.GetSyntaxNodeFrom<TSyntaxNode>();
+
+        }
+
         protected async Task<TSyntax> SaveAndUpdate<TSyntax>(TSyntax original,
             TSyntax updated,
             string filename) where TSyntax : SyntaxNode

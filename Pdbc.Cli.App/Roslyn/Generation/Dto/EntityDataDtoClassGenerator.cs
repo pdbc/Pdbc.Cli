@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using Pdbc.Cli.App.Extensions;
 using Pdbc.Cli.App.Roslyn.Builders;
 using Pdbc.Cli.App.Roslyn.Extensions;
 
@@ -9,7 +10,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Dto
 
         public static async Task GenerateEntityDataClassDto(this GenerationService service)
         {
-            var className = service.GenerationContext.DataDtoClass;
+            var className = service.GenerationContext.EntityName.ToDataDto();
             var subfolders = new[] { service.GenerationContext.PluralEntityName };
 
             var roslynProjectContext = service.RoslynSolutionContext.GetRoslynProjectContextFor("Dto");
@@ -23,7 +24,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Dto
                 entity = new ClassDeclarationSyntaxBuilder()
                     .WithName(className)
                     .ForNamespace(entityNamespace)
-                    .AddBaseClass(service.GenerationContext.DataDtoInterface)
+                    .AddBaseClass(service.GenerationContext.EntityName.ToDataDto().ToInterface())
                     .Build();
 
                 await service.FileHelperService.WriteFile(fullFilename, entity);

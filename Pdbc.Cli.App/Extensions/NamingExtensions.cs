@@ -25,6 +25,10 @@ namespace Pdbc.Cli.App.Extensions
         {
             return $"{name}DataDto";
         }
+        public static String ToDto(this string name)
+        {
+            return $"{name}Dto";
+        }
         public static String ToHandler(this string name)
         {
             return $"{name}Handler";

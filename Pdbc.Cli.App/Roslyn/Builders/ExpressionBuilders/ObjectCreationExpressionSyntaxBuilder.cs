@@ -3,21 +3,19 @@ using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-
-
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
-namespace Pdbc.Cli.App.Roslyn.Builders
+namespace Pdbc.Cli.App.Roslyn.Builders.ExpressionBuilders
 {
     public class ObjectCreationExpressionSyntaxBuilder : IExpressionSyntaxBuilder
     {
-        private string _name;
+        private readonly string _name;
         public ObjectCreationExpressionSyntaxBuilder(String name)
         {
             _name = name;
         }
 
-        private List<KeyValuePair<String, string>> assignmentStatements = new List<KeyValuePair<string, string>>();
+        private readonly List<KeyValuePair<String, string>> assignmentStatements = new List<KeyValuePair<string, string>>();
         public ObjectCreationExpressionSyntaxBuilder AddAssignementStatement(string to, string from)
         {
             assignmentStatements.Add(new KeyValuePair<string, string>(to, from));

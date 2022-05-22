@@ -1,7 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿
+using System.Threading.Tasks;
 using Pdbc.Cli.App.Context;
+using Pdbc.Cli.App.Extensions;
 using Pdbc.Cli.App.Roslyn.Builders;
 using Pdbc.Cli.App.Roslyn.Extensions;
+using Pdbc.Cli.App.Roslyn.Generation.Parts;
 using Pdbc.Cli.App.Services;
 
 namespace Pdbc.Cli.App.Roslyn.Generation.Api
@@ -10,15 +13,12 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Api
     {
         public static async Task GenerateApiRequestClass(this GenerationService service)
         {
-            var className = service.GenerationContext.ActionInfo.RequestInputClassName;
+            var className = service.GenerationContext.ActionInfo.ApiRequestClassName;
             var subfolders = new[] {"Requests", service.GenerationContext.PluralEntityName};
-            ;
-
+           
             var roslynProjectContext = service.RoslynSolutionContext.GetRoslynProjectContextFor("Api.Contracts");
             var fullFilename = roslynProjectContext.GetFullFilenameFor(className, subfolders);
-
-            // Generate the entity
-
+            
             var entity = await roslynProjectContext.GetClassByName(className);
             if (entity == null)
             {
@@ -43,13 +43,12 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Api
             {
                 entity = await service.Save(entity,
                     new PropertyDeclarationSyntaxBuilder().WithName(service.GenerationContext.EntityName)
-                        .ForType(service.GenerationContext.ActionDtoClass), fullFilename);
+                        .ForType(service.GenerationContext.ActionInfo.EntityActionName.ToDto()), fullFilename);
             }
 
             if (service.GenerationContext.ActionInfo.IsGetAction || service.GenerationContext.ActionInfo.IsDeleteAction)
             {
-                entity = await service.Save(entity,
-                    new PropertyDeclarationSyntaxBuilder().WithName("Id").ForType("long"), fullFilename);
+                entity = await service.GenerateIdentifierMandatoryProperty(entity, fullFilename);
             }
         }
     }

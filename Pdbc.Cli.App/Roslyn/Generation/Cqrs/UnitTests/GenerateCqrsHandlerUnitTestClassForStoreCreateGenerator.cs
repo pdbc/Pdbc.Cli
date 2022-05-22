@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Pdbc.Cli.App.Context;
 using Pdbc.Cli.App.Extensions;
 using Pdbc.Cli.App.Roslyn.Builders;
+using Pdbc.Cli.App.Roslyn.Builders.SyntaxBuilders;
 using Pdbc.Cli.App.Roslyn.Extensions;
 
 namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
@@ -54,7 +55,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                     .WithReturnType(service.GenerationContext.EntityName)
                     .WithModifier(SyntaxKind.ProtectedKeyword)
                     .AddStatement(
-                        new StatementSyntaxBuilder().AddStatement(
+                        new StatementSyntaxBuilder(
                             $"return new {service.GenerationContext.EntityName.ToTestDataBuilder()}();"))
                 ,
                 fullFilename);
@@ -64,7 +65,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                     .IsOverride(true)
                     .WithReturnType(service.GenerationContext.EntityName)
                     .WithModifier(SyntaxKind.ProtectedKeyword)
-                    .AddStatement(new StatementSyntaxBuilder().AddStatement($"return null;"))
+                    .AddStatement(new StatementSyntaxBuilder($"return null;"))
                 ,
                 fullFilename);
 
@@ -72,7 +73,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                     .WithName("Verify_factory_called_to_setup_item")
                     .WithModifier(SyntaxKind.PublicKeyword)
                     .AddTestAttribute(true)
-                    .AddStatement(new StatementSyntaxBuilder().AddStatement(
+                    .AddStatement(new StatementSyntaxBuilder(
                         $"Factory.AssertWasCalled(x => x.Create(Command.{service.GenerationContext.EntityName}));"))
                 ,
                 fullFilename);
@@ -82,7 +83,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                     .WithModifier(SyntaxKind.PublicKeyword)
                     .AddTestAttribute(true)
                     .AddStatement(
-                        new StatementSyntaxBuilder().AddStatement(
+                        new StatementSyntaxBuilder(
                             $"Repository.AssertWasCalled(x => x.Insert(CreatedItem));"))
                 ,
                 fullFilename);
@@ -91,7 +92,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                     .WithName("Verify_dbcontextservice_called_to_savechanges")
                     .WithModifier(SyntaxKind.PublicKeyword)
                     .AddTestAttribute(true)
-                    .AddStatement(new StatementSyntaxBuilder().AddStatement(
+                    .AddStatement(new StatementSyntaxBuilder(
                         $"{service.GenerationContext.ApplicationName}DbContextService.AssertWasCalled(x => x.SaveChangesAsync(CancellationToken));"))
                 ,
                 fullFilename);

@@ -93,20 +93,4 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Parts
         //private readonly ILogger<AssetsController> _logger;
 
     }
-
-    //public static class MethodGenerator
-    //{
-    //    public static async Task<TSyntaxNode> GenerateUnitTestEstablishContext<TSyntaxNode>(this GenerationService service,
-    //        TSyntaxNode entity,
-    //        string fullFilename)
-
-    //        where TSyntaxNode : TypeDeclarationSyntax
-    //    {
-    //        return await service.Save(entity, new MethodDeclarationSyntaxBuilder()
-    //            .WithName("Establish_context")
-    //            .IsOverride(true)
-    //            .WithModifier(SyntaxKind.ProtectedKeyword)
-    //            .AddStatement(new StatementSyntaxBuilder().AddStatement("base.Establish_context();")));
-    //    }
-    //}
 }

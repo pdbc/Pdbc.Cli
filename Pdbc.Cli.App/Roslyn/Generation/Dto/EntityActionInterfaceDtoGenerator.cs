@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Pdbc.Cli.App.Context;
+using Pdbc.Cli.App.Extensions;
 using Pdbc.Cli.App.Roslyn.Builders;
 using Pdbc.Cli.App.Roslyn.Extensions;
 using Pdbc.Cli.App.Roslyn.Generation.Parts;
@@ -10,21 +11,20 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Dto
     {
         public static async Task GenerateEntityActionInterfaceDto(this GenerationService service)
         {
-            var className = service.GenerationContext.ActionDtoInterface;
+            var className = service.GenerationContext.ActionInfo.EntityActionName.ToDto().ToInterface();
             var subfolders = new[] {service.GenerationContext.PluralEntityName};
 
             var roslynProjectContext = service.RoslynSolutionContext.GetRoslynProjectContextFor("Dto");
             var fullFilename = roslynProjectContext.GetFullFilenameFor(className, subfolders);
 
-            var entity = await roslynProjectContext.GetClassByName(className);
+            var entity = await roslynProjectContext.GetInterfaceByName(className);
             if (entity == null)
             {
                 var entityNamespace = roslynProjectContext.GetNamespace(subfolders);
 
-                entity = new ClassDeclarationSyntaxBuilder()
+                entity = new InterfaceDeclarationSyntaxBuilder()
                     .WithName(className)
                     .ForNamespace(entityNamespace)
-                    .AddUsingStatement(service.GenerationContext.GetNamespaceForDomainModel())
                     .AddBaseClass($"IInterfacingDto")
                     .Build();
 

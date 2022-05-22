@@ -2,6 +2,7 @@
 using Pdbc.Cli.App.Context;
 using Pdbc.Cli.App.Extensions;
 using Pdbc.Cli.App.Roslyn.Builders;
+using Pdbc.Cli.App.Roslyn.Builders.ExpressionBuilders;
 using Pdbc.Cli.App.Roslyn.Builders.SyntaxBuilders;
 using Pdbc.Cli.App.Roslyn.Extensions;
 using Pdbc.Cli.App.Roslyn.Generation.Parts;
@@ -26,7 +27,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs
 
             var entity = await roslynProjectContext.GetClassByName(className);
 
-            var outputCqrsClassname = service.GenerationContext.GetCqrsOutputClassNameBasedOnAction();
+            var outputCqrsClassname = service.GenerationContext.ActionInfo.CqrsOutputClassNameOverride;
             var inputCqrsClassName = service.GenerationContext.ActionInfo.CqrsInputClassName;
 
             if (entity == null)
@@ -72,7 +73,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs
                 entity = await service.Save(entity, MethodDeclarationSyntaxBuilder.CqrsHandleMethod(inputCqrsClassName, outputCqrsClassname)
                         .AddStatement(new AssignmentSyntaxBuilder("var items", $"_repository.GetAll()"))
                         .AddStatement(new AssignmentSyntaxBuilder("var mappedItems",
-                            $"_projectionService.Project<{service.GenerationContext.EntityName},{service.GenerationContext.DataDtoClass}>(items)"))
+                            $"_projectionService.Project<{service.GenerationContext.EntityName},{service.GenerationContext.EntityName.ToDataDto()}>(items)"))
                         .AddStatement(new ReturnStatementSyntaxBuilder().WithName("mappedItems")),
                     fullFilename);
             }
@@ -89,8 +90,8 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs
                     fullFilename);
 
                 entity = await service.Save(entity, MethodDeclarationSyntaxBuilder.CqrsHandleMethod(inputCqrsClassName, outputCqrsClassname)
-                        .AddStatement(new StatementSyntaxBuilder("var item = await _repository.GetByIdAsync(request.Id)"))
-                        .AddStatement(new StatementSyntaxBuilder("var mappedItem =_mapper.Map<{service.GenerationContext.DataDtoClass}>(item)"))
+                        .AddStatement(new StatementSyntaxBuilder("var item = await _repository.GetByIdAsync(request.Id);"))
+                        .AddStatement(new StatementSyntaxBuilder($"var mappedItem =_mapper.Map<{service.GenerationContext.EntityName.ToDataDto()}>(item);"))
                         .AddStatement(new ReturnStatementSyntaxBuilder().WithObjectCreationExpression(
                             new ObjectCreationExpressionSyntaxBuilder(
                                     $"{service.GenerationContext.ActionInfo.CqrsOutputClassName}")
@@ -126,10 +127,10 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs
                 entity = await service.GenerateRepositoryVariable(entity, fullFilename);
 
                 entity = await service.Save(entity, new VariableDeclarationSyntaxBuilder().WithName("_factory")
-                    .ForType($"IFactory<{service.GenerationContext.ActionDtoInterface}, {service.GenerationContext.EntityName}>")
+                    .ForType($"IFactory<{service.GenerationContext.ActionInfo.EntityActionName.ToDto().ToInterface()}, {service.GenerationContext.EntityName}>")
                     .WithIsReadonly(true), fullFilename);
                 entity = await service.Save(entity, new VariableDeclarationSyntaxBuilder().WithName("_changesHandler")
-                    .ForType($"IChangesHandler<{service.GenerationContext.ActionDtoInterface}, {service.GenerationContext.EntityName}>")
+                    .ForType($"IChangesHandler<{service.GenerationContext.ActionInfo.EntityActionName.ToDto().ToInterface()}, {service.GenerationContext.EntityName}>")
                     .WithIsReadonly(true), fullFilename);
 
                 entity = await service.Save(entity, new VariableDeclarationSyntaxBuilder().WithName("_mapper")
@@ -141,10 +142,10 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs
 
                 entity = await service.Save(entity, new ConstructorDeclarationSyntaxBuilder().WithName(className)
                         .AddParameter(
-                            $"IFactory<{service.GenerationContext.ActionDtoInterface}, {service.GenerationContext.EntityName}>",
+                            $"IFactory<{service.GenerationContext.ActionInfo.EntityActionName.ToDto().ToInterface()}, {service.GenerationContext.EntityName}>",
                             "factory")
                         .AddParameter(
-                            $"IChangesHandler<{service.GenerationContext.ActionDtoInterface}, {service.GenerationContext.EntityName}>",
+                            $"IChangesHandler<{service.GenerationContext.ActionInfo.EntityActionName.ToDto().ToInterface()}, {service.GenerationContext.EntityName}>",
                             "changesHandler")
                         .AddParameter(service.GenerationContext.EntityName.ToRepositoryInterface(), "repository")
                         .AddParameter($"IMapper", "mapper")
@@ -183,7 +184,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs
                         .AddStatement(
                             new StatementSyntaxBuilder($"await _dbContextService.SaveChangesAsync(cancellationToken);"))
                         .AddStatement(new StatementSyntaxBuilder(
-                            $" return new {service.GenerationContext.ActionInfo.CqrsOutputClassName} {{ {service.GenerationContext.EntityName} = _mapper.Map<{service.GenerationContext.DataDtoClass}>(entity) }};"))
+                            $" return new {service.GenerationContext.ActionInfo.CqrsOutputClassName} {{ {service.GenerationContext.EntityName} = _mapper.Map<{service.GenerationContext.EntityName.ToDataDto()}>(entity) }};"))
                     ,
 
                     fullFilename);

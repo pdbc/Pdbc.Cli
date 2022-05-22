@@ -1,11 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
-namespace Pdbc.Cli.App.Roslyn.Builders
+namespace Pdbc.Cli.App.Roslyn.Builders.SyntaxBuilders
 {
     public class StatementSyntaxBuilder : IStatementSyntaxBuilder
     {
@@ -14,18 +10,14 @@ namespace Pdbc.Cli.App.Roslyn.Builders
             
         }
 
+        private  string _body;
         public StatementSyntaxBuilder(string statement)
         {
             _body = statement;
+            //if (!statement.Trim().EndsWith(";"))
+            //    _body = $"{_body};";
         }
-
-        public string _body;
-        public StatementSyntaxBuilder AddStatement(string body)
-        {
-            _body = body;
-            return this;
-        }
-
+        
         public StatementSyntaxBuilder ThatThrowsNotImplementedException()
         {
             _body = "throw new NotImplementedException();";

@@ -34,7 +34,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs
                     .AddUsingStatement(service.GenerationContext.GetNamespaceForDto())
                     .AddUsingAertssenFrameworkCqrsInfra()
                     .AddBaseClass(
-                        $"I{service.GenerationContext.ActionInfo.CqrsInputType}<{service.GenerationContext.GetCqrsOutputClassNameBasedOnAction()}>")
+                        $"I{service.GenerationContext.ActionInfo.CqrsInputType}<{service.GenerationContext.ActionInfo.CqrsOutputClassNameOverride}>")
                     .Build();
 
                 await service.FileHelperService.WriteFile(fullFilename, entity);

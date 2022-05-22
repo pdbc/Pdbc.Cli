@@ -2,11 +2,11 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace Pdbc.Cli.App.Roslyn.Builders
+namespace Pdbc.Cli.App.Roslyn.Builders.SyntaxBuilders
 {
     public class BlockStatementSyntaxBuilder : IStatementSyntaxBuilder
     {
-        private IList<IStatementSyntaxBuilder> _statements = new List<IStatementSyntaxBuilder>();
+        private readonly IList<IStatementSyntaxBuilder> _statements = new List<IStatementSyntaxBuilder>();
         public BlockStatementSyntaxBuilder AddStatement(IStatementSyntaxBuilder statementSyntaxBuilder)
         {
             _statements.Add(statementSyntaxBuilder);

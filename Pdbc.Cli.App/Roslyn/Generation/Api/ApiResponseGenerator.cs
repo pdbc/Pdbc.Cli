@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Pdbc.Cli.App.Context;
+using Pdbc.Cli.App.Extensions;
 using Pdbc.Cli.App.Roslyn.Builders;
 using Pdbc.Cli.App.Roslyn.Extensions;
 
@@ -9,7 +10,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Api
     {
         public static async Task GenerateApiResponseClass(this GenerationService service)
         {
-            var className = service.GenerationContext.ActionInfo.RequestOutputClassName;
+            var className = service.GenerationContext.ActionInfo.ApiResponseClassName;
             var subfolders = new[] {"Requests", service.GenerationContext.PluralEntityName};
             ;
 
@@ -34,11 +35,11 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Api
                 await service.FileHelperService.WriteFile(fullFilename, entity);
             }
 
-            if (service.GenerationContext.RequiresDataDto)
+            if (service.GenerationContext.ActionInfo.RequiresDataDto)
             {
                 entity = await service.Save(entity, new PropertyDeclarationSyntaxBuilder()
                     .WithName(service.GenerationContext.EntityName)
-                    .ForType(service.GenerationContext.DataDtoClass), fullFilename);
+                    .ForType(service.GenerationContext.EntityName.ToDataDto()), fullFilename);
             }
         }
     }

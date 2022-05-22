@@ -6,7 +6,7 @@ using Pdbc.Cli.App.Roslyn.Extensions;
 
 namespace Pdbc.Cli.App.Roslyn.Generation.Services
 {
-    public static class WebApiServiceContractInterfaceGenerator
+    public static class ServiceContractInterfaceGenerator
     {
         public static async Task GenerateServiceContractInterface(this GenerationService service)
         {
@@ -37,8 +37,8 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Services
             entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
                     .WithName(service.GenerationContext.ActionInfo.ActionOperationName)
                     .IsInterfaceMethod(true)
-                    .WithReturnType($"Task<{service.GenerationContext.ActionInfo.RequestOutputClassName}>")
-                    .AddParameter(service.GenerationContext.ActionInfo.RequestInputClassName, "request"),
+                    .WithReturnType($"Task<{service.GenerationContext.ActionInfo.ApiResponseClassNameOverride}>")
+                    .AddParameter(service.GenerationContext.ActionInfo.ApiRequestClassName, "request"),
                 fullFilename);
         }
     }

@@ -2,7 +2,9 @@
 using Pdbc.Cli.App.Context;
 using Pdbc.Cli.App.Extensions;
 using Pdbc.Cli.App.Roslyn.Builders;
+using Pdbc.Cli.App.Roslyn.Builders.SyntaxBuilders;
 using Pdbc.Cli.App.Roslyn.Extensions;
+using Pdbc.Cli.App.Roslyn.Generation.Parts;
 using Pdbc.Cli.App.Services;
 
 namespace Pdbc.Cli.App.Roslyn.Generation.Services
@@ -34,7 +36,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Services
                     .AddUsingStatement(service.GenerationContext.GetNamespaceForRequests())
                     .AddUsingStatement(service.GenerationContext.GetNamespaceForServices())
                     .AddUsingStatement(service.GenerationContext.GetNamespaceForDto())
-                    .AddUsingStatement(service.GenerationContext.GetNamespaceForCoreCqrs())
+                    //.AddUsingStatement(service.GenerationContext.GetNamespaceForCoreCqrs())
                     .AddUsingAertssenFrameworkCqrsServices()
                     .AddAertssenFrameworkContractUsingStatements()
 
@@ -56,38 +58,63 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Services
                 ,
                 fullFilename);
 
+            entity = await service.AppendUsingStatement(entity, service.GenerationContext.GetNamespaceForCoreCqrs(), fullFilename);
 
             if (service.GenerationContext.ActionInfo.IsListAction)
             {
-                entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
-                        .WithName(service.GenerationContext.ActionInfo.ActionOperationName)
-                        .Async()
-                        .WithReturnType($"Task<{service.GenerationContext.ActionInfo.RequestOutputClassName}>")
-                        .AddParameter(service.GenerationContext.ActionInfo.RequestInputClassName, "request")
-                        .AddStatement(new StatementSyntaxBuilder().AddStatement(
-                            $"return await QueryForOData<{service.GenerationContext.ActionInfo.RequestInputClassName}, {service.GenerationContext.GetCqrsOutputClassNameBasedOnAction()}, {service.GenerationContext.DataDtoClass}, {service.GenerationContext.ActionInfo.RequestOutputClassName}>(request); ")),
+                
+                entity = await service.Save(entity, MethodDeclarationSyntaxBuilder.OperationNameMethodAsync(service.GenerationContext.ActionInfo.ActionOperationName,
+                            service.GenerationContext.ActionInfo.ApiRequestClassName,
+                            service.GenerationContext.ActionInfo.ApiResponseClassName)
+                        //.WithName(service.GenerationContext.ActionInfo.ActionOperationName)
+                        //.Async()
+                        //.WithReturnType($"Task<{service.GenerationContext.ActionInfo.ApiResponseClassName}>")
+                        //.AddParameter(service.GenerationContext.ActionInfo.ApiRequestClassName, "request")
+                        .AddStatement(new StatementSyntaxBuilder(
+                            $"return await QueryForOData<{service.GenerationContext.ActionInfo.ApiRequestClassName}, {service.GenerationContext.ActionInfo.CqrsOutputClassNameOverride}, {service.GenerationContext.EntityName.ToDataDto()}, {service.GenerationContext.ActionInfo.ApiResponseClassName}>(request); ")),
                     fullFilename);
+                
+                //entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
+                //        .WithName(service.GenerationContext.ActionInfo.ActionOperationName)
+                //        .Async()
+                //        .WithReturnType($"Task<{service.GenerationContext.ActionInfo.ApiResponseClassName}>")
+                //        .AddParameter(service.GenerationContext.ActionInfo.ApiRequestClassName, "request")
+                //        .AddStatement(new StatementSyntaxBuilder(
+                //            $"return await QueryForOData<{service.GenerationContext.ActionInfo.ApiRequestClassName}, {service.GenerationContext.GetCqrsOutputClassNameBasedOnAction()}, {service.GenerationContext.EntityName.ToDataDto()}, {service.GenerationContext.ActionInfo.ApiResponseClassName}>(request); ")),
+                //    fullFilename);
             } else if (service.GenerationContext.ActionInfo.IsGetAction)
             {
-                 entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
-                        .WithName(service.GenerationContext.ActionInfo.ActionOperationName)
-                        .Async()
-                        .WithReturnType($"Task<{service.GenerationContext.GetApiOutputClassNameBasedOnAction()}>")
-                        .AddParameter(service.GenerationContext.ActionInfo.RequestInputClassName, "request")
-                        .AddStatement(new StatementSyntaxBuilder().AddStatement(
-                            $"return await Query<{service.GenerationContext.ActionInfo.RequestInputClassName}, {service.GenerationContext.ActionInfo.CqrsInputClassName}, {service.GenerationContext.ActionInfo.CqrsOutputClassName}, {service.GenerationContext.GetApiOutputClassNameBasedOnAction()}>(request); ")),
-                    fullFilename);
+                entity = await service.GenerateCqrsStandardQueryMethod(entity, fullFilename);
+                
+                //entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
+                //        .WithName(service.GenerationContext.ActionInfo.ActionOperationName)
+                //        .Async()
+                //        .WithReturnType($"Task<{service.GenerationContext.ActionInfo.ApiResponseClassName}>")
+                //        .AddParameter(service.GenerationContext.ActionInfo.ApiRequestClassName, "request")
+                //entity = await service.Save(entity, MethodDeclarationSyntaxBuilder.OperationNameMethodAsync(service.GenerationContext.ActionInfo.ActionOperationName,
+                //            service.GenerationContext.ActionInfo.ApiRequestClassName,
+                //            service.GenerationContext.ActionInfo.ApiResponseClassName)
+                //            .AddStatement(new StatementSyntaxBuilder(       
+                //            $"return await Query<{service.GenerationContext.ActionInfo.ApiRequestClassName}, {service.GenerationContext.ActionInfo.CqrsInputClassName}, {service.GenerationContext.ActionInfo.CqrsOutputClassName}, {service.GenerationContext.ActionInfo.ApiResponseClassNameOverride}>(request); ")),
+                //    fullFilename);
             }
-            else if (service.GenerationContext.ActionInfo.IsDeleteAction || service.GenerationContext.ActionInfo.IsStoreAction)
+            else if (service.GenerationContext.ActionInfo.IsDeleteAction)
             {
-                entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
-                        .WithName(service.GenerationContext.ActionInfo.ActionOperationName)
-                        .Async()
-                        .WithReturnType($"Task<{service.GenerationContext.GetApiOutputClassNameBasedOnAction()}>")
-                        .AddParameter(service.GenerationContext.ActionInfo.RequestInputClassName, "request")
-                        .AddStatement(new StatementSyntaxBuilder().AddStatement(
-                            $"return await Command<{service.GenerationContext.ActionInfo.RequestInputClassName}, {service.GenerationContext.ActionInfo.CqrsInputClassName}, {service.GenerationContext.GetCqrsOutputClassNameBasedOnAction()}, {service.GenerationContext.GetApiOutputClassNameBasedOnAction()}>(request); ")),
-                    fullFilename);
+                entity = await service.GenerateCqrsStandardCommandMethod(entity, fullFilename);
+            }
+            else if ( service.GenerationContext.ActionInfo.IsStoreAction)
+            {
+                entity = await service.GenerateCqrsStandardCommandMethod(entity, fullFilename);
+
+
+                //entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
+                //        .WithName(service.GenerationContext.ActionInfo.ActionOperationName)
+                //        .Async()
+                //        .WithReturnType($"Task<{service.GenerationContext.ActionInfo.ApiResponseClassNameOverride}>")
+                //        .AddParameter(service.GenerationContext.ActionInfo.ApiRequestClassName, "request")
+                //        .AddStatement(new StatementSyntaxBuilder(
+                //            $"return await Command<{service.GenerationContext.ActionInfo.ApiRequestClassName}, {service.GenerationContext.ActionInfo.CqrsInputClassName}, {service.GenerationContext.ActionInfo.CqrsOutputClassNameOverride}, {service.GenerationContext.ActionInfo.ApiResponseClassNameOverride}>(request); ")),
+                //    fullFilename);
             }
 
         }

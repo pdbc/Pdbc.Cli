@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Context\Actions\ActionInfo.cs" />
     <Compile Remove="RoslynGenerationContext.cs" />
     <Compile Remove="Roslyn\Generation\Entity\EntityGenerationService.cs" />
     <Compile Remove="Roslyn\Generation\RepositoryGenerationService.cs" />

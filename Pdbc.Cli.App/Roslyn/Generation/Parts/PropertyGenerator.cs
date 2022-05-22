@@ -8,6 +8,19 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Parts
 {
     public static class PropertyGenerator
     {
+        public static async Task<TSyntaxNode> GenerateDataDtoInterfaceProperty<TSyntaxNode>(this GenerationService service,
+            TSyntaxNode entity,
+            string fullFilename)
+
+            where TSyntaxNode : TypeDeclarationSyntax
+        {
+            //public IAddressDataDto Address { get; set; }
+            return await service.Save(entity, new PropertyDeclarationSyntaxBuilder()
+                .WithName(service.GenerationContext.EntityName)
+                .ForType(service.GenerationContext.EntityName.ToDataDto().ToInterface()), fullFilename);
+
+            //return await service.Save(entity, new PropertyDeclarationSyntaxBuilder("String", "ExternalSystem"), fullFilename);
+        }
         public static async Task<TSyntaxNode> GenerateIdentifierOptionalProperty<TSyntaxNode>(this GenerationService service,
             TSyntaxNode entity,
             string fullFilename)
@@ -37,7 +50,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Parts
         {
             return await service.Save(entity,
                 new PropertyDeclarationSyntaxBuilder().WithName(service.GenerationContext.EntityName)
-                    .ForType(service.GenerationContext.ActionDtoInterface), fullFilename);
+                    .ForType(service.GenerationContext.ActionInfo.EntityActionName.ToDto().ToInterface()), fullFilename);
         }
         public static async Task<TSyntaxNode> GenerateExternalSystemProperty<TSyntaxNode>(this GenerationService service,
             TSyntaxNode entity,

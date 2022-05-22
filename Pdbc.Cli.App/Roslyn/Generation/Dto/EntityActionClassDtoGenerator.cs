@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Pdbc.Cli.App.Context;
+using Pdbc.Cli.App.Extensions;
 using Pdbc.Cli.App.Roslyn.Builders;
 using Pdbc.Cli.App.Roslyn.Extensions;
 using Pdbc.Cli.App.Roslyn.Generation.Parts;
@@ -11,7 +12,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Dto
 
         public static async Task GenerateEntityActionClassDto(this GenerationService service)
         {
-            var className = service.GenerationContext.ActionDtoClass;
+            var className = service.GenerationContext.ActionInfo.EntityActionName.ToDto();
             var subfolders = new[] { service.GenerationContext.PluralEntityName };
 
             var roslynProjectContext = service.RoslynSolutionContext.GetRoslynProjectContextFor("Dto");
@@ -25,8 +26,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Dto
                 entity = new ClassDeclarationSyntaxBuilder()
                     .WithName(className)
                     .ForNamespace(entityNamespace)
-                    .AddUsingStatement(service.GenerationContext.GetNamespaceForDomainModel())
-                    .AddBaseClass(service.GenerationContext.ActionDtoInterface)
+                    .AddBaseClass(service.GenerationContext.ActionInfo.EntityActionName.ToDto().ToInterface())
                     .Build();
 
                 await service.FileHelperService.WriteFile(fullFilename, entity);
@@ -35,12 +35,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Dto
             entity = await service.GenerateExternalSystemProperty(entity, fullFilename);
             entity = await service.GenerateExternalIdentificationProperty(entity, fullFilename);
             entity = await service.GenerateDateModifiedProperty(entity, fullFilename);
-
-
-            //entity = await service.Save(entity, new PropertyDeclarationSyntaxBuilder().WithName("ExternalSystem").ForType("String"), fullFilename);
-            //entity = await service.Save(entity, new PropertyDeclarationSyntaxBuilder().WithName("ExternalIdentification").ForType("String"), fullFilename);
-            //entity = await service.Save(entity, new PropertyDeclarationSyntaxBuilder().WithName("DateModified").ForType("DateTimeOffset"), fullFilename);
-
+            
             if (service.GenerationContext.ActionInfo.IsStoreAction)
             {
                 entity = await service.GenerateIdentifierOptionalProperty(entity, fullFilename);

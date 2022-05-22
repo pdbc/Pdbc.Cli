@@ -10,7 +10,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Api
     {
         public static async Task GenerateApiResponseClassTestDataBuilder(this GenerationService service)
         {
-            var className = service.GenerationContext.ActionInfo.RequestOutputClassName.ToTestDataBuilder();
+            var className = service.GenerationContext.ActionInfo.ApiResponseClassName.ToTestDataBuilder();
             var subfolders = new[] { "Api", service.GenerationContext.PluralEntityName };
 
             var roslynProjectContext = service.RoslynSolutionContext.GetRoslynProjectContextFor("Tests.Helpers");
@@ -31,7 +31,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Api
                 .AddUsingStatement(service.GenerationContext.GetNamespaceForRequests())
                 .AddAertssenFrameworkCoreUsingStatements()
                 .AddUnitTestUsingStatement()
-                .AddBaseClass($"{service.GenerationContext.ActionInfo.RequestOutputClassName.ToBuilder()}")
+                .AddBaseClass($"{service.GenerationContext.ActionInfo.ApiResponseClassName.ToBuilder()}")
                 .Build();
 
             await service.FileHelperService.WriteFile(fullFilename, entity);

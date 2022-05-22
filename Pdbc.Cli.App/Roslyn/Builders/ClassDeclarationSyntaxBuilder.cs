@@ -13,7 +13,6 @@ namespace Pdbc.Cli.App.Roslyn.Builders
 {
     internal class ClassDeclarationSyntaxBuilder
     {
-
         public static ClassDeclarationSyntaxBuilder ForBaseSpecification(string className, string @namespace)
         {
             return new ClassDeclarationSyntaxBuilder()

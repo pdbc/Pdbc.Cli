@@ -6,6 +6,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Pdbc.Cli.App.Extensions;
 using Pdbc.Cli.App.Model.Items;
+using Pdbc.Cli.App.Roslyn.Builders.SyntaxBuilders;
 using Pdbc.Cli.App.Roslyn.Extensions;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
@@ -28,7 +29,7 @@ namespace Pdbc.Cli.App.Roslyn.Builders
                 .WithName("Establish_context")
                 .IsOverride(true)
                 .WithModifier(SyntaxKind.ProtectedKeyword)
-                .AddStatement(new StatementSyntaxBuilder().AddStatement("base.Establish_context();"));
+                .AddStatement(new StatementSyntaxBuilder("base.Establish_context();"));
         }
         public static MethodDeclarationSyntaxBuilder UnitTestBecause()
         {

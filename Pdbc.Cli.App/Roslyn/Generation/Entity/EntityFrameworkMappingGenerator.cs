@@ -2,6 +2,7 @@
 using Pdbc.Cli.App.Context;
 using Pdbc.Cli.App.Extensions;
 using Pdbc.Cli.App.Roslyn.Builders;
+using Pdbc.Cli.App.Roslyn.Builders.SyntaxBuilders;
 using Pdbc.Cli.App.Roslyn.Extensions;
 
 namespace Pdbc.Cli.App.Roslyn.Generation.Entity
@@ -41,8 +42,8 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Entity
             entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder().WithName("Configure")
                     .AddParameter($"EntityTypeBuilder <{service.GenerationContext.EntityName}>", "builder")
                     .IsOverride(true)
-                    .AddStatement(new StatementSyntaxBuilder().AddStatement(@"base.Configure(builder);"))
-                    .AddStatement(new StatementSyntaxBuilder().AddStatement(bodyStatementToTable))
+                    .AddStatement(new StatementSyntaxBuilder(@"base.Configure(builder);"))
+                    .AddStatement(new StatementSyntaxBuilder(bodyStatementToTable))
                 ,
                 fullFilename);
         }

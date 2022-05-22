@@ -11,7 +11,6 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Controller
     {
         public static async Task GenerateControllerAction(this GenerationService service)
         {
-
             var className = service.GenerationContext.PluralEntityName.ToController();
 
             var roslynProjectContext = service.RoslynSolutionContext.GetRoslynProjectContextFor("Api", true);
@@ -56,14 +55,57 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Controller
             {
                 entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
                         .WithName(service.GenerationContext.ActionInfo.PublicActionOperationName)
-                        .AddParameter($"[FromQuery] {service.GenerationContext.ActionInfo.RequestInputClassName}", "request")
+                        .AddParameter($"[FromQuery] {service.GenerationContext.ActionInfo.ApiRequestClassName}", "request")
                         .WithReturnType("Task<IActionResult>")
                         .Async()
                         .AddAttribute("HttpGet")
-                        .AddAttribute($"Produces(typeof(IQueryable<{service.GenerationContext.DataDtoClass}>))")
+                        .AddAttribute($"Produces(typeof(IQueryable<{service.GenerationContext.EntityName.ToDataDto()}>))")
                         .AddAttribute("EnableQueryWithDefaultPageSize")
                         .AddStatement($"var response = await _cqrsService.{service.GenerationContext.ActionInfo.ActionOperationName}(request);")
                         .AddStatement("return Ok(response.Items);"),
+                    fullFilename);
+
+            } else if (service.GenerationContext.ActionInfo.IsGetAction)
+            {
+                entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName(service.GenerationContext.ActionInfo.PublicActionOperationName)
+                        .AddParameter($"[FromQuery] long", "id")
+                        .WithReturnType("Task<IActionResult>")
+                        .Async()
+                        .AddAttribute(@"HttpGet(""{id:long}"")")
+                        .AddAttribute($"Produces(typeof({service.GenerationContext.ActionInfo.ApiResponseClassName}))")
+                        .AddStatement($"var request = new {service.GenerationContext.ActionInfo.ApiRequestClassName}() {{ Id = id }};")
+                        .AddStatement($"var response = await _cqrsService.{service.GenerationContext.ActionInfo.ActionOperationName}(request);")
+                        .AddStatement("return Ok(response);"),
+                    fullFilename);
+                
+            }
+            else if (service.GenerationContext.ActionInfo.IsDeleteAction)
+            {
+                entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName(service.GenerationContext.ActionInfo.PublicActionOperationName)
+                        .AddParameter($"[FromRoute] long", "id")
+                        .WithReturnType("Task<IActionResult>")
+                        .Async()
+                        .AddAttribute(@"HttpDelete(""{id:long}"")")
+                        .AddAttribute($"Produces(typeof({service.GenerationContext.ActionInfo.ApiResponseClassNameOverride}))")
+                        .AddStatement($"var request = new {service.GenerationContext.ActionInfo.ApiRequestClassName}() {{ Id = id }};")
+                        .AddStatement($"var response = await _cqrsService.{service.GenerationContext.ActionInfo.ActionOperationName}(request);")
+                        .AddStatement("return Ok(response);"),
+                    fullFilename);
+
+            }
+            else if (service.GenerationContext.ActionInfo.IsStoreAction)
+            {
+                entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName(service.GenerationContext.ActionInfo.PublicActionOperationName)
+                        .AddParameter($"[FromBody] {service.GenerationContext.ActionInfo.ApiRequestClassName}", "request")
+                        .WithReturnType("Task<IActionResult>")
+                        .Async()
+                        .AddAttribute(@"HttpPost")
+                        .AddAttribute($"Produces(typeof({service.GenerationContext.ActionInfo.ApiResponseClassNameOverride}))")
+                        .AddStatement($"var response = await _cqrsService.{service.GenerationContext.ActionInfo.ActionOperationName}(request);")
+                        .AddStatement("return Ok(response);"),
                     fullFilename);
 
             }

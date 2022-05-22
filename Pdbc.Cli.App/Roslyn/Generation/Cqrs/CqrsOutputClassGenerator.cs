@@ -2,6 +2,7 @@
 using Pdbc.Cli.App.Context;
 using Pdbc.Cli.App.Roslyn.Builders;
 using Pdbc.Cli.App.Roslyn.Extensions;
+using Pdbc.Cli.App.Roslyn.Generation.Parts;
 
 namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs
 {
@@ -37,9 +38,10 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs
 
             }
 
-            if (service.GenerationContext.RequiresDataDto)
+            if (service.GenerationContext.ActionInfo.RequiresDataDto)
             {
-                entity = await service.Save(entity, new PropertyDeclarationSyntaxBuilder().WithName(service.GenerationContext.EntityName).ForType(service.GenerationContext.DataDtoInterface), fullFilename);
+                entity = await service.GenerateDataDtoInterfaceProperty(entity, fullFilename);
+                //entity = await service.Save(entity, new PropertyDeclarationSyntaxBuilder().WithName(service.GenerationContext.EntityName).ForType(service.GenerationContext.DataDtoInterface), fullFilename);
             }
         }
     }

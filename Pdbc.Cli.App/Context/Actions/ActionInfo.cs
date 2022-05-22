@@ -2,14 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Pdbc.Cli.App.Extensions;
 
 namespace Pdbc.Cli.App.Context.Actions
 {
-    public class ActionInfo
+    public class ActionInfo : IActionInfo
     {
-        private string ActionName { get; }
+        public string ActionName { get; }
         public String ActionEntityName { get; }
         public String EntityActionName { get; }
 
@@ -26,13 +27,8 @@ namespace Pdbc.Cli.App.Context.Actions
         public String ApiResponseBaseClassName { get; private set; }
         #endregion
 
-        public string RequestInputClassName { get; private set; }
-        public string RequestOutputClassName { get; private set; }
-
-        public ActionInfo()
-        {
-            ShouldGenerateCqrs = false;
-        }
+        public string ApiRequestClassName { get; private set; }
+        public string ApiResponseClassName { get; private set; }
 
         public ActionInfo(GenerationContext context)
         {
@@ -55,10 +51,11 @@ namespace Pdbc.Cli.App.Context.Actions
             ApiRequestBaseClassName = "AertssenRequest";
             ApiResponseBaseClassName = "AertssenResponse";
 
-            RequestInputClassName = $"{ActionEntityName}Request";
-            RequestOutputClassName = $"{ActionEntityName}Response";
+            ApiRequestClassName = $"{ActionEntityName}Request";
+            ApiResponseClassName = $"{ActionEntityName}Response";
 
-            // Resete fields
+            
+            // Reset fields
             IsListAction = false;
             IsGetAction = false;
             IsDeleteAction = false;
@@ -66,6 +63,8 @@ namespace Pdbc.Cli.App.Context.Actions
             IsCreateAction = false;
             IsUpdateAction = false;
             IsWithoutResponse = false;
+
+            ShouldGenerateCqrsOutputClass = false;
 
             switch (ActionName)
             {
@@ -75,6 +74,7 @@ namespace Pdbc.Cli.App.Context.Actions
                   
                     IsGetAction = true;
 
+                    ShouldGenerateCqrsOutputClass = true;
                     break;
 
                 case "List":
@@ -158,6 +158,9 @@ namespace Pdbc.Cli.App.Context.Actions
                 CqrsInputType = "Command";
                 CqrsOutputType = "Result";
             }
+
+            CqrsOutputClassForAction = CqrsOutputClassName;
+
         }
 
 
@@ -166,19 +169,18 @@ namespace Pdbc.Cli.App.Context.Actions
 
         public Boolean RequiresActionDto { get; }
         public Boolean RequiresDataDto { get; }
+        public Boolean ShouldGenerateCqrsOutputClass { get; }
 
 
         public Boolean IsQueryAction { get; }
         public Boolean IsCommandAction { get; }
 
 
-        #region CQRS classes Names
-        public string CqrsInputClassName => $"{ActionEntityName}{CqrsInputType}";
-        public string CqrsOutputClassName => $"{ActionEntityName}{CqrsOutputType}";
-        #endregion
-
-
-
+        //#region CQRS classes Names
+        //public string CqrsInputClassName => $"{ActionEntityName}{CqrsInputType}";
+        //public string CqrsOutputClassName => $"{ActionEntityName}{CqrsOutputType}";
+        //#endregion
+        
         #region Type Of Action
         public Boolean IsListAction { get; private set; }
         public Boolean IsGetAction { get; private set; }
@@ -189,5 +191,8 @@ namespace Pdbc.Cli.App.Context.Actions
 
         public Boolean IsWithoutResponse { get; private set; }
         #endregion
+
+
+
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Pdbc.Cli.App.Context;
 using Pdbc.Cli.App.Extensions;
 using Pdbc.Cli.App.Roslyn.Builders;
+using Pdbc.Cli.App.Roslyn.Builders.SyntaxBuilders;
 using Pdbc.Cli.App.Roslyn.Extensions;
 using Pdbc.Cli.App.Roslyn.Generation.Parts;
 
@@ -71,23 +72,20 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                         .AddStatement(new AssignmentSyntaxBuilder("Query", $"new {service.GenerationContext.ActionInfo.CqrsInputClassName.ToTestDataBuilder()}().Build()"))
                         .AddStatement(new AssignmentSyntaxBuilder("CancellationToken", $"new CancellationToken()"))
                         .AddStatement(new AssignmentSyntaxBuilder("Items", $"new List<{service.GenerationContext.EntityName}>().AsQueryable()"))
-                        .AddStatement(new StatementSyntaxBuilder().AddStatement($"Repository.Stub(x => x.GetAll()).Returns(Items);")),
+                        .AddStatement(new StatementSyntaxBuilder($"Repository.Stub(x => x.GetAll()).Returns(Items);")),
                     fullFilename);
 
                 entity = await service.Save(entity, MethodDeclarationSyntaxBuilder.UnitTestBecause()
-                        .AddStatement(new StatementSyntaxBuilder()
-                            .AddStatement("SUT.Handle(Query, CancellationToken).GetAwaiter().GetResult();")),
+                        .AddStatement(new StatementSyntaxBuilder("SUT.Handle(Query, CancellationToken).GetAwaiter().GetResult();")),
                     fullFilename);
 
                 entity = await service.Save(entity, MethodDeclarationSyntaxBuilder.UnitTestMethod("Verify_repository_called_to_load_items")
-                       .AddStatement(new StatementSyntaxBuilder()
-                           .AddStatement("Repository.AssertWasCalled(x => x.GetAll());"))
+                       .AddStatement(new StatementSyntaxBuilder("Repository.AssertWasCalled(x => x.GetAll());"))
                     ,
                     fullFilename);
 
                 entity = await service.Save(entity, MethodDeclarationSyntaxBuilder.UnitTestMethod("Verify_projection_service_called_to_map_data_to_dto_result")
-                      .AddStatement(new StatementSyntaxBuilder()
-                          .AddStatement($"ProjectionService.AssertWasCalled(x => x.Project<{service.GenerationContext.EntityName}, {service.GenerationContext.DataDtoClass}>(Items));")),
+                      .AddStatement(new StatementSyntaxBuilder($"ProjectionService.AssertWasCalled(x => x.Project<{service.GenerationContext.EntityName}, {service.GenerationContext.EntityName.ToDataDto()}>(Items));")),
                     fullFilename);
 
             }
@@ -122,13 +120,13 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                         .WithName("Establish_context")
                         .IsOverride(true)
                         .WithModifier(SyntaxKind.ProtectedKeyword)
-                        .AddStatement(new StatementSyntaxBuilder().AddStatement("base.Establish_context();"))
+                        .AddStatement(new StatementSyntaxBuilder("base.Establish_context();"))
                         .AddStatement(new AssignmentSyntaxBuilder("Query",
                             $"new {service.GenerationContext.ActionInfo.CqrsInputClassName.ToTestDataBuilder()}().Build()"))
                         .AddStatement(new AssignmentSyntaxBuilder("CancellationToken", $"new CancellationToken()"))
                         .AddStatement(new AssignmentSyntaxBuilder("Item",
                             $"new {service.GenerationContext.EntityName.ToTestDataBuilder()}().Build()"))
-                        .AddStatement(new StatementSyntaxBuilder().AddStatement(
+                        .AddStatement(new StatementSyntaxBuilder(
                             $"Repository.Stub(x => x.GetByIdAsync(Query.Id)).ReturnsAsync(Item);")),
                     fullFilename);
 
@@ -137,7 +135,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                         .IsOverride(true)
                         .WithModifier(SyntaxKind.ProtectedKeyword)
                         .AddStatement(
-                            new StatementSyntaxBuilder().AddStatement(
+                            new StatementSyntaxBuilder(
                                 "SUT.Handle(Query, CancellationToken).GetAwaiter().GetResult();"))
                     ,
                     fullFilename);
@@ -147,7 +145,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                         .WithModifier(SyntaxKind.PublicKeyword)
                         .AddTestAttribute(true)
                         .AddStatement(
-                            new StatementSyntaxBuilder().AddStatement(
+                            new StatementSyntaxBuilder(
                                 "Repository.AssertWasCalled(x => x.GetByIdAsync(Query.Id));"))
                     ,
                     fullFilename);
@@ -156,8 +154,8 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                         .WithName("Verify_mapper_called_to_map_data_to_dto_result")
                         .WithModifier(SyntaxKind.PublicKeyword)
                         .AddTestAttribute(true)
-                        .AddStatement(new StatementSyntaxBuilder().AddStatement(
-                            $"Mapper.AssertWasCalled(x => x.Map<{service.GenerationContext.DataDtoClass}>(Item));"))
+                        .AddStatement(new StatementSyntaxBuilder(
+                            $"Mapper.AssertWasCalled(x => x.Map<{service.GenerationContext.EntityName.ToDataDto()}>(Item));"))
                     ,
                     fullFilename);
 
@@ -187,13 +185,13 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                         .WithName("Establish_context")
                         .IsOverride(true)
                         .WithModifier(SyntaxKind.ProtectedKeyword)
-                        .AddStatement(new StatementSyntaxBuilder().AddStatement("base.Establish_context();"))
+                        .AddStatement(new StatementSyntaxBuilder("base.Establish_context();"))
                         .AddStatement(new AssignmentSyntaxBuilder("Command",
                             $"new {service.GenerationContext.ActionInfo.CqrsInputClassName.ToTestDataBuilder()}().Build()"))
                         .AddStatement(new AssignmentSyntaxBuilder("CancellationToken", $"new CancellationToken()"))
                         .AddStatement(new AssignmentSyntaxBuilder("Item",
                             $"new {service.GenerationContext.EntityName.ToTestDataBuilder()}().Build()"))
-                        .AddStatement(new StatementSyntaxBuilder().AddStatement(
+                        .AddStatement(new StatementSyntaxBuilder(
                             $"Repository.Stub(x => x.GetByIdAsync(Command.Id)).ReturnsAsync(Item);")),
                     fullFilename);
 
@@ -201,7 +199,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                         .WithName("Because")
                         .IsOverride(true)
                         .WithModifier(SyntaxKind.ProtectedKeyword)
-                        .AddStatement(new StatementSyntaxBuilder().AddStatement(
+                        .AddStatement(new StatementSyntaxBuilder(
                             "SUT.Handle(Command, CancellationToken).GetAwaiter().GetResult();"))
                     ,
                     fullFilename);
@@ -211,7 +209,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                         .WithModifier(SyntaxKind.PublicKeyword)
                         .AddTestAttribute(true)
                         .AddStatement(
-                            new StatementSyntaxBuilder().AddStatement(
+                            new StatementSyntaxBuilder(
                                 "Repository.AssertWasCalled(x => x.GetByIdAsync(Command.Id));"))
                     ,
                     fullFilename);
@@ -221,7 +219,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                         .WithModifier(SyntaxKind.PublicKeyword)
                         .AddTestAttribute(true)
                         .AddStatement(
-                            new StatementSyntaxBuilder().AddStatement(
+                            new StatementSyntaxBuilder(
                                 $"Repository.AssertWasCalled(x => x.Delete(Item));"))
                     ,
                     fullFilename);
@@ -242,17 +240,17 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                 entity = await service.Save(entity, new PropertyDeclarationSyntaxBuilder()
                         .WithModifier(SyntaxKind.ProtectedKeyword)
                         .WithName("Factory")
-                        .ForType($"IFactory<{service.GenerationContext.ActionDtoInterface}, {service.GenerationContext.EntityName}>")
+                        .ForType($"IFactory<{service.GenerationContext.ActionInfo.EntityActionName.ToDto().ToInterface()}, {service.GenerationContext.EntityName}>")
                         .WithDependencyType(
-                            $"IFactory<{service.GenerationContext.ActionDtoInterface}, {service.GenerationContext.EntityName}>"),
+                            $"IFactory<{service.GenerationContext.ActionInfo.EntityActionName.ToDto().ToInterface()}, {service.GenerationContext.EntityName}>"),
                     fullFilename);
                 entity = await service.Save(entity, new PropertyDeclarationSyntaxBuilder()
                         .WithModifier(SyntaxKind.ProtectedKeyword)
                         .WithName("ChangesHandler")
                         .ForType(
-                            $"IChangesHandler<{service.GenerationContext.ActionDtoInterface}, {service.GenerationContext.EntityName}>")
+                            $"IChangesHandler<{service.GenerationContext.ActionInfo.EntityActionName.ToDto().ToInterface()}, {service.GenerationContext.EntityName}>")
                         .WithDependencyType(
-                            $"IChangesHandler<{service.GenerationContext.ActionDtoInterface}, {service.GenerationContext.EntityName}>"),
+                            $"IChangesHandler<{service.GenerationContext.ActionInfo.EntityActionName.ToDto().ToInterface()}, {service.GenerationContext.EntityName}>"),
                     fullFilename);
                 entity = await service.Save(entity, new PropertyDeclarationSyntaxBuilder()
                     .WithModifier(SyntaxKind.ProtectedKeyword)
@@ -279,7 +277,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                         .WithName("Establish_context")
                         .IsOverride(true)
                         .WithModifier(SyntaxKind.ProtectedKeyword)
-                        .AddStatement(new StatementSyntaxBuilder().AddStatement("base.Establish_context();"))
+                        .AddStatement(new StatementSyntaxBuilder("base.Establish_context();"))
                         .AddStatement(new StatementSyntaxBuilder("Command = CreateCommand();"))
                         .AddStatement(new StatementSyntaxBuilder("CreatedItem = GetCreatedItem();"))
                         .AddStatement(new StatementSyntaxBuilder("LoadedItem = GetLoadedItem();"))
@@ -325,7 +323,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                         .WithName("Because")
                         .IsOverride(true)
                         .WithModifier(SyntaxKind.ProtectedKeyword)
-                        .AddStatement(new StatementSyntaxBuilder().AddStatement(
+                        .AddStatement(new StatementSyntaxBuilder(
                             "SUT.Handle(Command, CancellationToken).GetAwaiter().GetResult();"))
                     ,
                     fullFilename);
@@ -338,7 +336,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                 //        .WithName("Verify_repository_called_to_load_item")
                 //        .WithModifier(SyntaxKind.PublicKeyword)
                 //        .AddTestAttribute(true)
-                //        .AddStatement(new StatementSyntaxBuilder().AddStatement("Repository.AssertWasCalled(x => x.GetByIdAsync(Command.Id));"))
+                //        .AddStatement(new StatementSyntaxBuilder("Repository.AssertWasCalled(x => x.GetByIdAsync(Command.Id));"))
                 //    ,
                 //    fullFilename);
 
@@ -346,7 +344,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                 //        .WithName("Verify_repository_called_to_delete_the_item")
                 //        .WithModifier(SyntaxKind.PublicKeyword)
                 //        .AddTestAttribute(true)
-                //        .AddStatement(new StatementSyntaxBuilder().AddStatement($"Repository.AssertWasCalled(x => x.Delete(Item));"))
+                //        .AddStatement(new StatementSyntaxBuilder($"Repository.AssertWasCalled(x => x.Delete(Item));"))
                 //    ,
                 //    fullFilename);
 

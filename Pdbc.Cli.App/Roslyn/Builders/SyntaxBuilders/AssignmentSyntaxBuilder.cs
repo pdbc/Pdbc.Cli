@@ -1,11 +1,9 @@
 ﻿using System;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-
-
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
-namespace Pdbc.Cli.App.Roslyn.Builders
+namespace Pdbc.Cli.App.Roslyn.Builders.SyntaxBuilders
 {
     public class AssignmentSyntaxBuilder : IStatementSyntaxBuilder
     {
@@ -15,21 +13,8 @@ namespace Pdbc.Cli.App.Roslyn.Builders
             _parameterName = parameterName;
         }
 
-        public String _variableName;
-        public String _parameterName;
-
-        //public AssignmentSyntaxBuilder WithVariableName(string parameterName)
-        //{
-        //    _variableName = parameterName;
-        //    return this;
-        //}
-
-
-        //public AssignmentSyntaxBuilder WithParameterName(string parameterName)
-        //{
-        //    _parameterName = parameterName;
-        //    return this;
-        //}
+        private readonly String _variableName;
+        private readonly String _parameterName;
 
         public StatementSyntax Build()
         {
