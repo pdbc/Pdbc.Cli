@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Pdbc.Cli.App.Context;
+using Pdbc.Cli.App.Extensions;
 using Pdbc.Cli.App.Roslyn.Builders;
 using Pdbc.Cli.App.Roslyn.Extensions;
 
@@ -11,7 +12,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs
 
         public static async Task GenerateCqrsValidatorClass(this GenerationService service)
         {
-            var className = service.GenerationContext.CqrsValidatorClassName;
+            var className = service.GenerationContext.ActionInfo.CqrsInputClassName.ToValidator();
             var subfolders = new[]
             {
                 "CQRS",

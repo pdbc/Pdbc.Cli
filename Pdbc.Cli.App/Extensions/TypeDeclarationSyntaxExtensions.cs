@@ -23,8 +23,6 @@ namespace Pdbc.Cli.App.Extensions
         {
             foreach (var variable in typeSyntax.Members.OfType<FieldDeclarationSyntax>())
             {
-                //var second = variable.SelectMany(n => n.Declaration.Variables).Where(n => n.Identifier.ValueText == "secondVariable").Single();
-
                 foreach (var v in variable.Declaration.Variables)
                 {
                 if (v.Identifier.ValueText == name)

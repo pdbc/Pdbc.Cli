@@ -3,6 +3,7 @@ using Pdbc.Cli.App.Context;
 using Pdbc.Cli.App.Extensions;
 using Pdbc.Cli.App.Roslyn.Builders;
 using Pdbc.Cli.App.Roslyn.Extensions;
+using Pdbc.Cli.App.Roslyn.Generation.Parts;
 
 namespace Pdbc.Cli.App.Roslyn.Generation.Api
 {
@@ -23,7 +24,6 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Api
             {
                 var entityNamespace = roslynProjectContext.GetNamespace(subfolders);
 
-
                 entity = new ClassDeclarationSyntaxBuilder()
                     .WithName(className)
                     .ForNamespace(entityNamespace)
@@ -35,11 +35,10 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Api
                 await service.FileHelperService.WriteFile(fullFilename, entity);
             }
 
-            if (service.GenerationContext.ActionInfo.RequiresDataDto)
+            if (service.GenerationContext.ActionInfo.RequiresDataDto && 
+                !service.GenerationContext.ActionInfo.IsListAction)
             {
-                entity = await service.Save(entity, new PropertyDeclarationSyntaxBuilder()
-                    .WithName(service.GenerationContext.EntityName)
-                    .ForType(service.GenerationContext.EntityName.ToDataDto()), fullFilename);
+                entity = await service.GenerateDataDtoClassProperty(entity, fullFilename);
             }
         }
     }

@@ -10,7 +10,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs
     {
         public static async Task GenerateCqrsFactoryClass(this GenerationService service)
         {
-            var className = service.GenerationContext.CqrsFactoryClassName;
+            var className = service.GenerationContext.ActionInfo.CqrsInputClassName.ToFactory();
             var subfolders = new[]
             {
                 "CQRS",

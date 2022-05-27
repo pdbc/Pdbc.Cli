@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Pdbc.Cli.App.Context;
 using Pdbc.Cli.App.Extensions;
 using Pdbc.Cli.App.Roslyn.Builders;
@@ -34,7 +35,6 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Controller
                     .AddAttribute("ApiController")
                     .AddAttribute(@"Route(""[controller]"")")
                     .AddAttribute("Authorize")
-
                     .AddBaseClass($"ControllerBase")
                     .Build();
 
@@ -108,6 +108,10 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Controller
                         .AddStatement("return Ok(response);"),
                     fullFilename);
 
+            }
+            else
+            {
+                throw new NotImplementedException();
             }
         }
 

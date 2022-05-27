@@ -4,8 +4,9 @@ namespace Pdbc.Cli.App.Context.Actions
 {
     public interface IActionInfo
     {
-        string ActionName { get; }
+        //string ActionName { get; }
         String ActionEntityName { get; }
+        
         String EntityActionName { get; }
 
 
@@ -27,6 +28,8 @@ namespace Pdbc.Cli.App.Context.Actions
         string CqrsInputClassName { get; }
         string CqrsOutputClassName { get; }
 
+        string ServiceContractName { get; set; }
+
         #region Possible Overrides
         string PublicActionOperationName { get; }
 
@@ -38,9 +41,7 @@ namespace Pdbc.Cli.App.Context.Actions
 
         Boolean ShouldGenerateCqrs { get; }
         Boolean ShouldGenerateCqrsOutputClass { get; }
-
-
-        //string CqrsOutputClassForAction { get; }
+        
 
         Boolean RequiresActionDto { get; }
         Boolean RequiresDataDto { get; }
@@ -49,8 +50,8 @@ namespace Pdbc.Cli.App.Context.Actions
         Boolean RequiresChangesHandler { get; set; }
 
 
-        Boolean IsQueryAction { get; }
-        Boolean IsCommandAction { get; }
+        //Boolean IsQueryAction { get; }
+        //Boolean IsCommandAction { get; }
         
         
 
@@ -62,5 +63,11 @@ namespace Pdbc.Cli.App.Context.Actions
         Boolean IsUpdateAction { get; }
         Boolean IsCreateAction { get; }
         Boolean IsWithoutResponse { get; }
+
+
+
+        String HttpMethodAttributeUrl { get; set; }
+
+        String HttpMethodAttributeMethod { get; set; }
     }
 }

@@ -35,7 +35,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Services
                     .AddAertssenFrameworkServiceAgentsUsingStatements()
                     .AddAertssenFrameworkContractUsingStatements()
                     .AddBaseClass("WebApiService")
-                    .AddBaseClass(service.GenerationContext.ServiceContractName.ToInterface())
+                    .AddBaseClass(service.GenerationContext.ActionInfo.ServiceContractName.ToInterface())
                     .Build();
 
                 await service.FileHelperService.WriteFile(fullFilename, entity);

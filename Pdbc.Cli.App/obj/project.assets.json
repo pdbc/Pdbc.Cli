@@ -5999,28 +5999,35 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\PDB\\.nuget\\packages\\": {}
+    "C:\\Users\\patri\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft\\Xamarin\\NuGet\\": {},
+    "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\repos\\Pdbc\\pdbc.cli\\Pdbc.Cli.App\\Pdbc.Cli.App.csproj",
+      "projectUniqueName": "D:\\code\\pdbc\\Pdbc.Cli\\Pdbc.Cli.App\\Pdbc.Cli.App.csproj",
       "projectName": "AerCli",
-      "projectPath": "C:\\repos\\Pdbc\\pdbc.cli\\Pdbc.Cli.App\\Pdbc.Cli.App.csproj",
-      "packagesPath": "C:\\Users\\PDB\\.nuget\\packages\\",
-      "outputPath": "C:\\repos\\Pdbc\\pdbc.cli\\Pdbc.Cli.App\\obj\\",
+      "projectPath": "D:\\code\\pdbc\\Pdbc.Cli\\Pdbc.Cli.App\\Pdbc.Cli.App.csproj",
+      "packagesPath": "C:\\Users\\patri\\.nuget\\packages\\",
+      "outputPath": "D:\\code\\pdbc\\Pdbc.Cli\\Pdbc.Cli.App\\obj\\",
       "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files (x86)\\Microsoft\\Xamarin\\NuGet\\",
+        "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+      ],
       "configFilePaths": [
-        "C:\\Users\\PDB\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "C:\\Users\\patri\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Xamarin.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net5.0"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-        "https://api.nuget.org/v3/index.json": {},
-        "https://pkgs.dev.azure.com/aertssen/Development/_packaging/Aertssen/nuget/v3/index.json": {}
+        "D:\\development\\nuget": {},
+        "D:\\development\\nuget\\Aertssen": {},
+        "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net5.0": {
@@ -6065,12 +6072,6 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
-        "downloadDependencies": [
-          {
-            "name": "Microsoft.NETCore.App.Host.win-x64",
-            "version": "[5.0.16, 5.0.16]"
-          }
-        ],
         "frameworkReferences": {
           "Microsoft.NETCore.App": {
             "privateAssets": "all"

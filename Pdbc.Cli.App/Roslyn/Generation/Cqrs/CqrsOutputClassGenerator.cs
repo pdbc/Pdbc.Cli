@@ -41,7 +41,6 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs
             if (service.GenerationContext.ActionInfo.RequiresDataDto)
             {
                 entity = await service.GenerateDataDtoInterfaceProperty(entity, fullFilename);
-                //entity = await service.Save(entity, new PropertyDeclarationSyntaxBuilder().WithName(service.GenerationContext.EntityName).ForType(service.GenerationContext.DataDtoInterface), fullFilename);
             }
         }
     }

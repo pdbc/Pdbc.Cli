@@ -10,7 +10,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
     {
         public static async Task GenerateCqrsChangesHandlerUnitTestClass(this GenerationService service)
         {
-            var className = service.GenerationContext.CqrsChangesHandlerClassName.ToSpecification();
+            var className = service.GenerationContext.ActionInfo.CqrsInputClassName.ToChangesHandler().ToSpecification();
 
             var subfolders = new[] { "Core", "CQRS", service.GenerationContext.PluralEntityName, service.GenerationContext.ActionName };
 
@@ -37,7 +37,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                 .AddUsingStatement(service.GenerationContext.GetNamespaceForDto())
                 .AddUsingAertssenFrameworkCqrsInfra()
                 .AddTestFixtureAttribute(true)
-                .AddBaseClass($"{service.GenerationContext.CqrsChangesHandlerClassName.ToContextSpecification()}")
+                .AddBaseClass($"{service.GenerationContext.ActionInfo.CqrsInputClassName.ToChangesHandler().ToContextSpecification()}")
                 .Build();
 
             entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()

@@ -12,7 +12,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
     {
         public static async Task GenerateCqrsHandlerUnitTestClassForStoreCreate(this GenerationService service)
         {
-            var className = $"Create{service.GenerationContext.CqrsHandlerClassName}".ToSpecification();
+            var className = $"Create{service.GenerationContext.ActionInfo.CqrsInputClassName.ToHandler()}".ToSpecification();
             var subfolders = new[] { "Core", "CQRS", service.GenerationContext.PluralEntityName, service.GenerationContext.ActionName };
 
             var roslynProjectContext = service.RoslynSolutionContext.GetRoslynProjectContextFor("UnitTests");
@@ -46,7 +46,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                 .AddUsingAertssenFrameworkCqrsInfra()
                 .AddUsingAertssenFrameworkServices()
                 .AddTestFixtureAttribute(true)
-                .AddBaseClass($"{service.GenerationContext.CqrsHandlerClassName.ToSpecification()}")
+                .AddBaseClass($"{service.GenerationContext.ActionInfo.CqrsInputClassName.ToHandler().ToSpecification()}")
                 .Build();
 
             entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()

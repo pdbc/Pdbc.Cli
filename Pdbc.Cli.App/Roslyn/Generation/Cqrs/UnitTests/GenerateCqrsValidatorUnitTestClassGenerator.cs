@@ -11,7 +11,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
 
         public static async Task GenerateCqrsValidatorUnitTestClass(this GenerationService service)
         {
-            var className = service.GenerationContext.CqrsValidatorClassName.ToSpecification();
+            var className = service.GenerationContext.ActionInfo.CqrsInputClassName.ToValidator().ToSpecification();
 
             var subfolders = new[] { "Core", "CQRS", service.GenerationContext.PluralEntityName, service.GenerationContext.ActionName };
 
@@ -38,7 +38,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                 .AddUsingStatement(service.GenerationContext.GetNamespaceForDto())
                 .AddUsingAertssenFrameworkCqrsInfra()
                 .AddTestFixtureAttribute(true)
-                .AddBaseClass($"{service.GenerationContext.CqrsValidatorClassName.ToContextSpecification()}")
+                .AddBaseClass($"{service.GenerationContext.ActionInfo.CqrsInputClassName.ToValidator().ToContextSpecification()}")
                 .Build();
 
             entity = await service.Save(entity, MethodDeclarationSyntaxBuilder.AssertionFailedTestMethod("Verify_validator_logic_executed"),

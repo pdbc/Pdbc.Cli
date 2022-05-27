@@ -10,16 +10,7 @@ namespace Pdbc.Cli.App.Roslyn.Extensions
 {
     public static class RoslynExtensions
     {
-        // Move to extension method ??
-        public static CompilationUnitSyntax AddUsingStatements(this CompilationUnitSyntax @namespace, params string[] statements)
-        {
-            foreach (var s in statements)
-            {
-                @namespace = @namespace.AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(s)));
-            }
 
-            return @namespace;
-        }
 
         public static ClassDeclarationSyntax AddBaseClasses(this ClassDeclarationSyntax syntax,
             params string[] baseClasses)

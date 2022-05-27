@@ -31,7 +31,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Services
                     .AddUsingStatement(service.GenerationContext.GetNamespaceForDto())
                     .AddAertssenFrameworkContractUsingStatements()
 
-                    .AddBaseClass(service.GenerationContext.ServiceContractName.ToInterface())
+                    .AddBaseClass(service.GenerationContext.ActionInfo.ServiceContractName.ToInterface())
                     .Build();
 
                 await service.FileHelperService.WriteFile(fullFilename, entity);

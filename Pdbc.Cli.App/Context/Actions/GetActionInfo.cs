@@ -4,7 +4,7 @@
     {
         public GetActionInfo(GenerationContext context) : base(context)
         {
-            IsQueryAction = true;
+            //IsQueryAction = true;
             CqrsInputType = "Query";
             CqrsOutputType = "ViewModel";
 
@@ -16,7 +16,9 @@
             CalculateValues();
 
 
-
+            HttpMethodAttributeMethod = $"Get";
+            HttpMethodAttributeUrl = $"{context.PluralEntityName}/" + "{id}";
         }
+
     }
 }

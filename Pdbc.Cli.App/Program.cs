@@ -35,12 +35,17 @@ namespace Pdbc.Cli.App
 
             var startupParameter = new StartupParameters
             {
-                EntityName = "Route",
-                PluralEntityName = "Routes",
+                EntityName = "Address",
+                PluralEntityName = "Addresses",
+
+
+                //EntityName = "Route",
+                //PluralEntityName = "Routes",
                 //Action = "List"
                 //Action = "Get"
                 //Action = "Delete"
-                Action = "Store"
+                //Action = "Store"
+                Action = "CalculateLongitudeLatitude"
             };
 
             RunOptions(startupParameter);
@@ -67,8 +72,13 @@ namespace Pdbc.Cli.App
                 return;
             }
 
+            //// TODO Fix paths
+            //cliConfiguration.BasePath = @"D:\code\Aertssen\aertssen.framework.templates\demo\Sample";
+            //cliConfiguration.ApplicationName = "Locations";
+            //cliConfiguration.RootNamespace = "Locations";
+
             // TODO Fix paths
-            cliConfiguration.BasePath = @"C:\repos\Development\Aertssen.Framework.Templates\demo\locations";
+            cliConfiguration.BasePath = @"D:\code\Aertssen\aertssen.framework.templates\demo\Locations";
             cliConfiguration.ApplicationName = "Locations";
             cliConfiguration.RootNamespace = "Locations";
 
@@ -97,6 +107,11 @@ namespace Pdbc.Cli.App
             await generationService.GenerateEntityUnitTest();
             await generationService.GenerateEntityTestDataBuilder();
 
+            await generationService.AppendFactoryMethodForDomainEntityToTestCaseService();
+            await generationService.AppendFactoryMethodForDomainEntityToTestCaseFactory();
+            await generationService.AppendTestDataObjectsMethods();
+
+
             // Repository
             await generationService.GenerateRepositoryInterface();
             await generationService.GenerateRepositoryClass();
@@ -114,12 +129,16 @@ namespace Pdbc.Cli.App
                 {
                     await generationService.GenerateEntityActionInterfaceDto();
                     await generationService.GenerateEntityActionClassDto();
+                    await generationService.GenerateEntityActionClassDtoTestDataBuilder();
                 }
 
                 if (generationContext.ActionInfo.RequiresDataDto)
                 {
                     await generationService.GenerateEntityDataInterfaceDto();
                     await generationService.GenerateEntityDataClassDto();
+                    await generationService.GenerateEntityDataClassDtoTestDataBuilder();
+                    await generationService.AppendEntityToDataDtoMapping();
+                    //TODO Add tot DomainDtoMappings
                 }
 
                 await generationService.GenerateCqrsInputClass();

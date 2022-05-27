@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Pdbc.Cli.App.Extensions;
 using Pdbc.Cli.App.Roslyn.Builders;
 using Pdbc.Cli.App.Roslyn.Extensions;
 

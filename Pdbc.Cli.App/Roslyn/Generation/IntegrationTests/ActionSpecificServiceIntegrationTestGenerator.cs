@@ -29,11 +29,12 @@ namespace Pdbc.Cli.App.Roslyn.Generation.IntegrationTests
                     .WithName(className)
                     .ForNamespace(entityNamespace)
                     .AddBaseClass(
-                        $"{service.GenerationContext.ServiceContractName.ToTest()}<{service.GenerationContext.ActionInfo.ApiResponseClassNameOverride}>")
+                        $"{service.GenerationContext.ActionInfo.ServiceContractName.ToTest()}<{service.GenerationContext.ActionInfo.ApiResponseClassNameOverride}>")
                     .AddUsingStatement(service.GenerationContext.GetNamespaceForData())
                     .AddUsingStatement(service.GenerationContext.GetNamespaceForServices())
                     .AddUsingStatement(service.GenerationContext.GetNamespaceForRequests())
                     .AddUsingStatement(service.GenerationContext.GetNamespaceForApiTestDataBuilders())
+                    .AddUsingStatement(service.GenerationContext.GetNamespaceForDomainModel())
                     .AddAertssenFrameworkContractUsingStatements()
                     .AddUnitTestUsingStatement()
                     .Build();
@@ -48,26 +49,15 @@ namespace Pdbc.Cli.App.Roslyn.Generation.IntegrationTests
 
 
             entity = await service.Save(entity, new ConstructorDeclarationSyntaxBuilder().WithName(className)
-                    .AddParameter(service.GenerationContext.ServiceContractName.ToInterface(), "service")
+                    .AddParameter(service.GenerationContext.ActionInfo.ServiceContractName.ToInterface(), "service")
                     .AddParameter(service.GenerationContext.ApplicationName.ToDbContext(), "context")
                     .AddBaseParameter("service")
                     .AddBaseParameter("context")
                 ,
                 fullFilename);
 
-            entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
-                    .WithName("Setup")
-                    .IsOverride(true)
-                    .AddStatement(new StatementSyntaxBuilder(
-                        $"_request = new {service.GenerationContext.ActionInfo.ApiRequestClassName.ToTestDataBuilder()}();"))
-                ,
-                fullFilename);
 
-            entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
-                    .WithName("Cleanup")
-                    .IsOverride(true)
-                ,
-                fullFilename);
+
 
             entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
                     .WithName("PerformAction")
@@ -80,29 +70,105 @@ namespace Pdbc.Cli.App.Roslyn.Generation.IntegrationTests
 
             if (service.GenerationContext.ActionInfo.IsListAction)
             {
-                entity = await service.GenerateVerifyResponseNotImplementedExceptionMethod(entity, fullFilename);
-            }
-            else if (service.GenerationContext.ActionInfo.IsGetAction)
-            {
+                entity = await service.Save(entity, new PropertyDeclarationSyntaxBuilder()
+                        .WithName($"Entity")
+                        .ForType($"{service.GenerationContext.EntityName}")
+                    , fullFilename);
+
+                entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName("Setup")
+                        .IsOverride(true)
+                        .AddStatement($"Entity = TestCaseService.Setup{service.GenerationContext.EntityName}();")
+                        .AddStatement($"_request = new {service.GenerationContext.ActionInfo.ApiRequestClassName.ToTestDataBuilder()}();"),
+                    fullFilename);
+
+                entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName("Cleanup")
+                        .IsOverride(true)
+                        .AddStatement($"DbContext.SafeRemoveEntityForIntegrationTest(Entity);")
+                    ,
+                    fullFilename);
+
                 entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
                         .WithName("VerifyResponse")
                         .AddParameter(service.GenerationContext.ActionInfo.ApiResponseClassName, "response")
                         .IsOverride(true)
-                        .AddStatement(
-                            new StatementSyntaxBuilder($"response.Notifications?.HasErrors().ShouldBeFalse();"))
-                        .AddStatement(
-                            new StatementSyntaxBuilder(
-                                $"response.{service.GenerationContext.EntityName}.ShouldNotBeNull();"))
-                    //
+                        .AddStatement($"response.Notifications?.HasErrors().ShouldBeFalse();")
+                        .AddStatement($"response.Items.Any().ShouldBeTrue();"),
+                    fullFilename);
+            }
+            else if (service.GenerationContext.ActionInfo.IsGetAction)
+            {
+                entity = await service.Save(entity, new PropertyDeclarationSyntaxBuilder()
+                        .WithName($"Entity")
+                        .ForType($"{service.GenerationContext.EntityName}")
+                    , fullFilename);
+
+
+                entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName("Setup")
+                        .IsOverride(true)
+                        .AddStatement($"Entity = TestCaseService.Setup{service.GenerationContext.EntityName}();")
+                        .AddStatement($"_request = new {service.GenerationContext.ActionInfo.ApiRequestClassName.ToTestDataBuilder()}().WithId(Entity.Id);"),
+                    fullFilename);
+
+                entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName("Cleanup")
+                        .IsOverride(true)
+                        .AddStatement($"DbContext.SafeRemoveEntityForIntegrationTest(Entity);")
                     ,
+                    fullFilename);
+
+                entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName("VerifyResponse")
+                        .AddParameter(service.GenerationContext.ActionInfo.ApiResponseClassName, "response")
+                        .IsOverride(true)
+                        .AddStatement($"response.Notifications?.HasErrors().ShouldBeFalse();")
+                        .AddStatement($"response.{service.GenerationContext.EntityName}.ShouldNotBeNull();"),
                     fullFilename);
             }
             else if (service.GenerationContext.ActionInfo.IsDeleteAction)
             {
-                entity = await service.GenerateVerifyResponseNotImplementedExceptionMethod(entity, fullFilename);
+                entity = await service.Save(entity, new PropertyDeclarationSyntaxBuilder()
+                        .WithName($"Entity")
+                        .ForType($"{service.GenerationContext.EntityName}")
+                    , fullFilename);
+
+                entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName("Setup")
+                        .IsOverride(true)
+                        .AddStatement($"Entity = TestCaseService.Setup{service.GenerationContext.EntityName}();")
+                        .AddStatement($"_request = new {service.GenerationContext.ActionInfo.ApiRequestClassName.ToTestDataBuilder()}().WithId(Entity.Id);"),
+                    fullFilename);
+
+                entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName("Cleanup")
+                        .IsOverride(true),
+                    fullFilename);
+
+                entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName("CheckActionSucceeded")
+                        .IsOverride(true)
+                        .AddStatement($" DbContext.Set<{service.GenerationContext.EntityName}>().Find(Entity.Id).ShouldBeNull();"),
+                    fullFilename);
+
+                entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName("VerifyResponse")
+                        .AddParameter(service.GenerationContext.ActionInfo.ApiResponseClassNameOverride, "response")
+                        .IsOverride(true)
+                        .AddStatement($"response.Notifications?.HasErrors().ShouldBeFalse();"),
+                    fullFilename);
+                
             }
             else if (service.GenerationContext.ActionInfo.IsStoreAction)
             {
+                entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName("Setup")
+                        .IsOverride(true)
+                        .AddStatement($"_request = new {service.GenerationContext.ActionInfo.ApiRequestClassName.ToTestDataBuilder()}();"),
+                    fullFilename);
+
+
                 entity = await service.GenerateVerifyResponseNotImplementedExceptionMethod(entity, fullFilename);
             }
 

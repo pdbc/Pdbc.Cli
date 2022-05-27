@@ -33,17 +33,23 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Entity
                 .AddUsingAertssenFrameworkAuditModel()
                 .AddUsingAertssenFrameworkRepositories()
                 .AddUsingStatement(service.GenerationContext.GetNamespaceForDomainModel())
+                .AddUsingStatement(service.GenerationContext.GetNamespaceForDomainModelValidations())
                 .AddBaseClass($"AuditableIdentifiableMapping<{service.GenerationContext.EntityName}>")
                 .Build();
 
             await service.FileHelperService.WriteFile(fullFilename, entity);
 
+
+            
+            
             string bodyStatementToTable = $"builder.ToTable(\"{service.GenerationContext.PluralEntityName}\");";
             entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder().WithName("Configure")
                     .AddParameter($"EntityTypeBuilder <{service.GenerationContext.EntityName}>", "builder")
                     .IsOverride(true)
                     .AddStatement(new StatementSyntaxBuilder(@"base.Configure(builder);"))
                     .AddStatement(new StatementSyntaxBuilder(bodyStatementToTable))
+                    .AddStatement("builder.ApplyMappingExternallyIdentifiable();")
+                    .AddStatement($"builder.HasIndex(e => new {{ e.ExternalSystem, e.ExternalIdentification }}, \"UK_{service.GenerationContext.EntityName}_External\").IsUnique();\r\n")
                 ,
                 fullFilename);
         }

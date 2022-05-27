@@ -28,6 +28,30 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Parts
             return result;
         }
 
+        public static async Task<TSyntaxNode> GenerateFactoryVariable<TSyntaxNode>(this GenerationService service,
+            TSyntaxNode entity,
+            string fullFilename)
+
+            where TSyntaxNode : TypeDeclarationSyntax
+        {
+            var result = await service.Save(entity, new VariableDeclarationSyntaxBuilder().WithName("_factory")
+                .ForType($"IFactory<{service.GenerationContext.ActionInfo.EntityActionName.ToDto().ToInterface()}, {service.GenerationContext.EntityName}>")
+                .WithIsReadonly(true), fullFilename);
+
+            return result;
+        }
+        public static async Task<TSyntaxNode> GenerateChangesHandlerVariable<TSyntaxNode>(this GenerationService service,
+            TSyntaxNode entity,
+            string fullFilename)
+
+            where TSyntaxNode : TypeDeclarationSyntax
+        {
+            var result = await service.Save(entity, new VariableDeclarationSyntaxBuilder().WithName("_changesHandler")
+                .ForType($"IChangesHandler<{service.GenerationContext.ActionInfo.EntityActionName.ToDto().ToInterface()}, {service.GenerationContext.EntityName}>")
+                .WithIsReadonly(true), fullFilename);
+
+            return result;
+        }
         public static async Task<TSyntaxNode> GenerateProjectionServiceVariable<TSyntaxNode>(this GenerationService service,
             TSyntaxNode entity,
             string fullFilename)
@@ -57,7 +81,18 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Parts
 
             return result;
         }
+        public static async Task<TSyntaxNode> GenerateDbContextServiceVariable<TSyntaxNode>(this GenerationService service,
+            TSyntaxNode entity,
+            string fullFilename)
 
+            where TSyntaxNode : TypeDeclarationSyntax
+        {
+            var result = await service.Save(entity, new VariableDeclarationSyntaxBuilder().WithName("_dbContextService")
+                .ForType($"I{service.GenerationContext.ApplicationName}DbContextService")
+                .WithIsReadonly(true), fullFilename);
+
+            return result;
+        }
 
         public static async Task<TSyntaxNode> GenerateLoggerVariable<TSyntaxNode>(this GenerationService service,
             TSyntaxNode entity,

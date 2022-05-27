@@ -71,7 +71,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Services
                         //.WithReturnType($"Task<{service.GenerationContext.ActionInfo.ApiResponseClassName}>")
                         //.AddParameter(service.GenerationContext.ActionInfo.ApiRequestClassName, "request")
                         .AddStatement(new StatementSyntaxBuilder(
-                            $"return await QueryForOData<{service.GenerationContext.ActionInfo.ApiRequestClassName}, {service.GenerationContext.ActionInfo.CqrsOutputClassNameOverride}, {service.GenerationContext.EntityName.ToDataDto()}, {service.GenerationContext.ActionInfo.ApiResponseClassName}>(request); ")),
+                            $"return await QueryForOData<{service.GenerationContext.ActionInfo.ApiRequestClassName}, {service.GenerationContext.ActionInfo.CqrsInputClassName}, {service.GenerationContext.EntityName.ToDataDto()}, {service.GenerationContext.ActionInfo.ApiResponseClassName}>(request); ")),
                     fullFilename);
                 
                 //entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()

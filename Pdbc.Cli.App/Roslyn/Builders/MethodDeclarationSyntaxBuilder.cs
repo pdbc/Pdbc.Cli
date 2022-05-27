@@ -14,6 +14,7 @@ namespace Pdbc.Cli.App.Roslyn.Builders
 {
     public class MethodDeclarationSyntaxBuilder
     {
+
         public static MethodDeclarationSyntaxBuilder OperationNameMethodAsync(string operationName, string requestType, string resultType)
         {
             return new MethodDeclarationSyntaxBuilder()

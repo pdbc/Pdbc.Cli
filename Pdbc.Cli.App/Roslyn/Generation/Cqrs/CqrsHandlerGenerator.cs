@@ -14,7 +14,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs
 
         public static async Task GenerateCqrsHandlerClass(this GenerationService service)
         {
-            var className = service.GenerationContext.CqrsHandlerClassName;
+            var className = service.GenerationContext.ActionInfo.CqrsInputClassName.ToHandler();
             var subfolders = new[]
             {
                 "CQRS",
@@ -125,20 +125,20 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs
             else if (service.GenerationContext.ActionInfo.IsStoreAction)
             {
                 entity = await service.GenerateRepositoryVariable(entity, fullFilename);
+                entity = await service.GenerateFactoryVariable(entity, fullFilename);
+                entity = await service.GenerateChangesHandlerVariable(entity, fullFilename);
+                entity = await service.GenerateMapperVariable(entity, fullFilename);
+                entity = await service.GenerateDbContextServiceVariable(entity, fullFilename);
+                //entity = await service.Save(entity, new VariableDeclarationSyntaxBuilder().WithName("_changesHandler")
+                //    .ForType($"IChangesHandler<{service.GenerationContext.ActionInfo.EntityActionName.ToDto().ToInterface()}, {service.GenerationContext.EntityName}>")
+                //    .WithIsReadonly(true), fullFilename);
 
-                entity = await service.Save(entity, new VariableDeclarationSyntaxBuilder().WithName("_factory")
-                    .ForType($"IFactory<{service.GenerationContext.ActionInfo.EntityActionName.ToDto().ToInterface()}, {service.GenerationContext.EntityName}>")
-                    .WithIsReadonly(true), fullFilename);
-                entity = await service.Save(entity, new VariableDeclarationSyntaxBuilder().WithName("_changesHandler")
-                    .ForType($"IChangesHandler<{service.GenerationContext.ActionInfo.EntityActionName.ToDto().ToInterface()}, {service.GenerationContext.EntityName}>")
-                    .WithIsReadonly(true), fullFilename);
-
-                entity = await service.Save(entity, new VariableDeclarationSyntaxBuilder().WithName("_mapper")
-                    .ForType("IMapper")
-                    .WithIsReadonly(true), fullFilename);
-                entity = await service.Save(entity, new VariableDeclarationSyntaxBuilder().WithName("_dbContextService")
-                    .ForType($"I{service.GenerationContext.ApplicationName}DbContextService")
-                    .WithIsReadonly(true), fullFilename);
+                //entity = await service.Save(entity, new VariableDeclarationSyntaxBuilder().WithName("_mapper")
+                //    .ForType("IMapper")
+                //    .WithIsReadonly(true), fullFilename);
+                //entity = await service.Save(entity, new VariableDeclarationSyntaxBuilder().WithName("_dbContextService")
+                //    .ForType($"I{service.GenerationContext.ApplicationName}DbContextService")
+                //    .WithIsReadonly(true), fullFilename);
 
                 entity = await service.Save(entity, new ConstructorDeclarationSyntaxBuilder().WithName(className)
                         .AddParameter(

@@ -20,7 +20,13 @@
 
   <ItemGroup>
     <Compile Remove="Context\Actions\ActionInfo.cs" />
+    <Compile Remove="Context\StandardAction.cs" />
+    <Compile Remove="Extensions\ClassDeclarationsSyntaxExtensions.cs" />
+    <Compile Remove="Extensions\GenerationContextNamingExtensions.cs" />
+    <Compile Remove="Extensions\MethodDeclarationSyntaxExtensions.cs" />
+    <Compile Remove="Model\GenerationConfigurationNamespaceExtensions.cs" />
     <Compile Remove="RoslynGenerationContext.cs" />
+    <Compile Remove="Roslyn\Extensions\TypeDeclarationSyntaxExtensions.cs" />
     <Compile Remove="Roslyn\Generation\Entity\EntityGenerationService.cs" />
     <Compile Remove="Roslyn\Generation\RepositoryGenerationService.cs" />
     <Compile Remove="Visitors\MyRewriter.cs" />

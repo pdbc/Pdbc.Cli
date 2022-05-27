@@ -10,7 +10,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Services
     {
         public static async Task GenerateServiceContractInterface(this GenerationService service)
         {
-            var className = service.GenerationContext.ServiceContractName.ToInterface();
+            var className = service.GenerationContext.ActionInfo.ServiceContractName.ToInterface();
             var subfolders = new[] {"Services", service.GenerationContext.PluralEntityName};
 
             var roslynProjectContext = service.RoslynSolutionContext.GetRoslynProjectContextFor("Api.Contracts");

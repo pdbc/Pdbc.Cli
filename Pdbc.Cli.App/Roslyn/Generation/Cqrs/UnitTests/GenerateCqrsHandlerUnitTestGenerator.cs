@@ -14,7 +14,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
 
         public static async Task GenerateCqrsHandlerUnitTestClass(this GenerationService service)
         {
-            var className = service.GenerationContext.CqrsHandlerClassName.ToSpecification();
+            var className = service.GenerationContext.ActionInfo.CqrsInputClassName.ToHandler().ToSpecification();
             var subfolders = new[] {"Core", "CQRS", service.GenerationContext.PluralEntityName, service.GenerationContext.ActionName};
 
             var roslynProjectContext = service.RoslynSolutionContext.GetRoslynProjectContextFor("UnitTests");
@@ -51,7 +51,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
                 .AddUsingAertssenFrameworkCqrsInfra()
                 .AddUsingAertssenFrameworkServices()
                 .AddTestFixtureAttribute(true)
-                .AddBaseClass($"{service.GenerationContext.CqrsHandlerClassName.ToContextSpecification()}")
+                .AddBaseClass($"{service.GenerationContext.ActionInfo.CqrsInputClassName.ToHandler().ToContextSpecification()}")
                 .Build();
 
 
@@ -331,23 +331,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs.UnitTests
 
                 await service.GenerateCqrsHandlerUnitTestClassForStoreCreate();
                 await service.GenerateCqrsHandlerUnitTestClassForStoreUpdate();
-
-                //entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
-                //        .WithName("Verify_repository_called_to_load_item")
-                //        .WithModifier(SyntaxKind.PublicKeyword)
-                //        .AddTestAttribute(true)
-                //        .AddStatement(new StatementSyntaxBuilder("Repository.AssertWasCalled(x => x.GetByIdAsync(Command.Id));"))
-                //    ,
-                //    fullFilename);
-
-                //entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
-                //        .WithName("Verify_repository_called_to_delete_the_item")
-                //        .WithModifier(SyntaxKind.PublicKeyword)
-                //        .AddTestAttribute(true)
-                //        .AddStatement(new StatementSyntaxBuilder($"Repository.AssertWasCalled(x => x.Delete(Item));"))
-                //    ,
-                //    fullFilename);
-
+                
             }
             else
             {

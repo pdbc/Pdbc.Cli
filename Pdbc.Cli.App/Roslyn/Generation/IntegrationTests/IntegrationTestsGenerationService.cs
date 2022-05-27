@@ -13,7 +13,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.IntegrationTests
     {
         public static async Task GenerateBaseServiceIntegrationTest(this GenerationService service)
         {
-            var className = service.GenerationContext.ServiceContractName.ToTest();
+            var className = service.GenerationContext.ActionInfo.ServiceContractName.ToTest();
             var subfolders = new[] {"IntegrationTests", service.GenerationContext.PluralEntityName};
 
             var roslynProjectContext = service.RoslynSolutionContext.GetRoslynProjectContextFor("Integration.Tests");
@@ -41,12 +41,12 @@ namespace Pdbc.Cli.App.Roslyn.Generation.IntegrationTests
 
             entity = await service.Save(entity, new VariableDeclarationSyntaxBuilder()
                 .WithName($"Service")
-                .ForType($"{service.GenerationContext.ServiceContractName.ToInterface()}")
+                .ForType($"{service.GenerationContext.ActionInfo.ServiceContractName.ToInterface()}")
                 .WithModifier(SyntaxKind.ProtectedKeyword), fullFilename);
 
 
             entity = await service.Save(entity, new ConstructorDeclarationSyntaxBuilder().WithName(className)
-                    .AddParameter(service.GenerationContext.ServiceContractName.ToInterface(), "service")
+                    .AddParameter(service.GenerationContext.ActionInfo.ServiceContractName.ToInterface(), "service")
                     .AddParameter(service.GenerationContext.ApplicationName.ToDbContext(), "context")
                     .AddBaseParameter("context")
                     .WithModifier(SyntaxKind.ProtectedKeyword)

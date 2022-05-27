@@ -14,7 +14,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Entity
             var subfolders = new[] { "Domain", "Model" };
 
             var roslynProjectContext = service.RoslynSolutionContext.GetRoslynProjectContextFor("UnitTests");
-            var fullFilename = roslynProjectContext.GetFullFilenameFor(className, subfolders);
+            var fullFilename = roslynProjectContext.GetFullTestsFilenameFor(className, subfolders);
 
             var entity = await roslynProjectContext.GetClassByName(className);
             if (entity != null)
@@ -31,7 +31,19 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Entity
 
             await service.FileHelperService.WriteFile(fullFilename, entity);
 
+            entity = await service.AppendUsingStatement(entity, service.GenerationContext.GetNamespaceForDomainModel(), fullFilename);
+            entity = await service.AppendUsingStatement(entity, service.GenerationContext.GetNamespaceForDomainModelHelpers(), fullFilename);
+
             entity = await service.Save(entity, MethodDeclarationSyntaxBuilder.AssertionFailedTestMethod("Verify_domain_model_action"), fullFilename);
+
+            entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
+                .WithName("Verify_property_change_is_audited")
+                .AddParameter("string", "propertyName")
+                .AddParameter("Boolean", "expectation")
+                .AddAttribute($"TestCase(nameof({service.GenerationContext.EntityName}.Id), true)")
+                .AddStatement($"var entity = new {service.GenerationContext.EntityName.ToTestDataBuilder()}().Build();")
+                .AddStatement($"entity.ShouldAuditPropertyChangeFor(propertyName).ShouldBeEqualTo(expectation);"), fullFilename);
+
 
         }
     }

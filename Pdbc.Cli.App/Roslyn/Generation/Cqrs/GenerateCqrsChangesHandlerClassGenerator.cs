@@ -10,7 +10,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs
     {
         public static async Task GenerateCqrsChangesHandlerClass(this GenerationService service)
         {
-            var className = service.GenerationContext.CqrsChangesHandlerClassName;
+            var className = service.GenerationContext.ActionInfo.CqrsInputClassName.ToChangesHandler();
             var subfolders = new[]
             {
                 "CQRS",

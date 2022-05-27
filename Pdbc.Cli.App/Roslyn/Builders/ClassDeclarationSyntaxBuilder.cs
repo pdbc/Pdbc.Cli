@@ -29,6 +29,7 @@ namespace Pdbc.Cli.App.Roslyn.Builders
                 .ForNamespace(@namespace)
                 .AddBaseClass(item.ToBuilder());
         }
+
         private String _namespace;
         public ClassDeclarationSyntaxBuilder ForNamespace(String @namespace)
         {
@@ -70,6 +71,7 @@ namespace Pdbc.Cli.App.Roslyn.Builders
             AddUsingStatement("Microsoft.AspNetCore.Mvc");
             AddUsingStatement("Microsoft.Extensions.Logging");
             AddUsingStatement("Aertssen.Framework.Api.Common.OData");
+            AddUsingStatement("Aertssen.Framework.Api.Contracts");
             return this;
             
         }

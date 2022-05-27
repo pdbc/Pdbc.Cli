@@ -49,6 +49,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation
 
             return entity;
         }
+
         public async Task<TSyntaxNode> Save<TSyntaxNode>(TSyntaxNode entity,
             MethodDeclarationSyntaxBuilder method,
             String filename) where TSyntaxNode : TypeDeclarationSyntax
@@ -114,10 +115,13 @@ namespace Pdbc.Cli.App.Roslyn.Generation
 
         }
 
-        protected async Task<TSyntax> SaveAndUpdate<TSyntax>(TSyntax original,
+        public async Task<TSyntax> SaveAndUpdate<TSyntax>(TSyntax original,
             TSyntax updated,
             string filename) where TSyntax : SyntaxNode
         {
+
+            //var fullFilename = original.SyntaxTree.FilePath;
+
             var originalNamespace = original.GetParentNodeOfType<NamespaceDeclarationSyntax>();
             var originalCompilationSyntax = originalNamespace.GetParentNodeOfType<CompilationUnitSyntax>();
 

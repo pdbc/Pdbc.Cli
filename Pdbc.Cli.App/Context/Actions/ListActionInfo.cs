@@ -6,7 +6,7 @@ namespace Pdbc.Cli.App.Context.Actions
     {
         public ListActionInfo(GenerationContext context) : base(context)
         {
-            IsQueryAction = true;
+            //IsQueryAction = true;
             CqrsInputType = "Query";
             CqrsOutputType = "ViewModel";
 
@@ -17,7 +17,7 @@ namespace Pdbc.Cli.App.Context.Actions
             ApiRequestBaseClassName = "AertssenListRequest";
             ApiResponseBaseClassName = $"AertssenListResponse<{context.EntityName.ToDataDto()}>";
 
-            ActionOperationName = $"{ActionName}{context.PluralEntityName}";
+            ActionOperationName = $"{context.ActionName}{context.PluralEntityName}";
             PublicActionOperationName = $"Get{context.PluralEntityName}";
 
             CalculateValues();
@@ -26,6 +26,11 @@ namespace Pdbc.Cli.App.Context.Actions
             //ApiResponseClassNameOverride = "AertssenResponse";
             //CqrsOutputClassNameOverride = "Nothing";
 
+            HttpMethodAttributeMethod = "Get";
+            HttpMethodAttributeUrl = $"odata/{context.PluralEntityName}";
+
         }
+
+
     }
 }

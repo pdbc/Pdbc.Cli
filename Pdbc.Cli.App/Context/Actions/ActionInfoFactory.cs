@@ -16,9 +16,7 @@ namespace Pdbc.Cli.App.Context.Actions
 
                 case "Store":
                     return new StoreActionInfo(context);
-
-                    break;
-
+                    
                 case "Create":
 
                     break;

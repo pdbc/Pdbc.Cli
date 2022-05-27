@@ -41,5 +41,31 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Dto
                 entity = await service.GenerateIdentifierOptionalProperty(entity, fullFilename);
             }
         }
+
+        public static async Task GenerateEntityActionClassDtoTestDataBuilder(this GenerationService service)
+        {
+            var className = service.GenerationContext.ActionInfo.EntityActionName.ToDto().ToTestDataBuilder();
+            var subfolders = new[] { "DTO", service.GenerationContext.PluralEntityName };
+                
+            var roslynProjectContext = service.RoslynSolutionContext.GetRoslynProjectContextFor("Tests.Helpers");
+            var fullFilename = roslynProjectContext.GetFullTestsFilenameFor(className, subfolders);
+
+            var entity = await roslynProjectContext.GetClassByName(className);
+            if (entity == null)
+            {
+                var entityNamespace = roslynProjectContext.GetNamespace(subfolders);
+
+                entity = new ClassDeclarationSyntaxBuilder()
+                    .WithName(className)
+                    .ForNamespace(entityNamespace)
+                    .AddUsingStatement(service.GenerationContext.GetNamespaceForDto())
+                    .AddBaseClass(service.GenerationContext.ActionInfo.EntityActionName.ToDto().ToBuilder())
+                    .Build();
+
+                await service.FileHelperService.WriteFile(fullFilename, entity);
+            }
+
+        }
+
     }
 }

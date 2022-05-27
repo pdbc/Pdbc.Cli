@@ -31,8 +31,8 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Api
                     .AddUsingStatement(service.GenerationContext.GetNamespaceForDto())
                     .AddAertssenFrameworkContractUsingStatements()
                     .AddBaseClass(service.GenerationContext.ActionInfo.ApiRequestBaseClassName)
-                    .AddHttpMethodAttribute(service.GenerationContext.GetHttpMethodAttributeUrlValue(),
-                        service.GenerationContext.GetHttpMethodAttributeMethodValue())
+                    .AddHttpMethodAttribute(service.GenerationContext.ActionInfo.HttpMethodAttributeUrl,
+                        service.GenerationContext.ActionInfo.HttpMethodAttributeMethod)
                     .Build();
                 ;
                 await service.FileHelperService.WriteFile(fullFilename, entity);
@@ -41,9 +41,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Api
 
             if (service.GenerationContext.ActionInfo.RequiresActionDto)
             {
-                entity = await service.Save(entity,
-                    new PropertyDeclarationSyntaxBuilder().WithName(service.GenerationContext.EntityName)
-                        .ForType(service.GenerationContext.ActionInfo.EntityActionName.ToDto()), fullFilename);
+                entity = await service.GenerateActionDtoClassProperty(entity, fullFilename);
             }
 
             if (service.GenerationContext.ActionInfo.IsGetAction || service.GenerationContext.ActionInfo.IsDeleteAction)

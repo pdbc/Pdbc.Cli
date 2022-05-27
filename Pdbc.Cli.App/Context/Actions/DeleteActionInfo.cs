@@ -4,7 +4,7 @@
     {
         public DeleteActionInfo(GenerationContext context) : base(context)
         {
-            IsCommandAction = true;
+            //IsCommandAction = true;
             CqrsInputType = "Command";
             CqrsOutputType = "Result";
 
@@ -17,6 +17,10 @@
             ApiResponseClassNameOverride = "AertssenResponse";
             CqrsOutputClassNameOverride = "Nothing";
 
+            HttpMethodAttributeMethod = "Delete";
+            HttpMethodAttributeUrl = $"{context.PluralEntityName}/" + "{id}"; ;
         }
+
+
     }
 }

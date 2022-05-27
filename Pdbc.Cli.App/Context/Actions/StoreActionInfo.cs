@@ -1,4 +1,5 @@
-﻿using Pdbc.Cli.App.Extensions;
+﻿using System;
+using Pdbc.Cli.App.Extensions;
 
 namespace Pdbc.Cli.App.Context.Actions
 {
@@ -6,7 +7,7 @@ namespace Pdbc.Cli.App.Context.Actions
     {
         public StoreActionInfo(GenerationContext context) : base(context)
         {
-            IsQueryAction = false;
+            //IsQueryAction = false;
             CqrsInputType = "Command";
             CqrsOutputType = "Result";
 
@@ -20,11 +21,15 @@ namespace Pdbc.Cli.App.Context.Actions
 
             IsStoreAction = true;
 
-            ActionOperationName = $"{ActionName}{context.EntityName}";
+            ActionOperationName = $"{context.ActionName}{context.EntityName}";
 
             CalculateValues();
 
-
+            HttpMethodAttributeMethod = "Post";
+            HttpMethodAttributeUrl = $"{context.PluralEntityName}/" + "{id}";
         }
+
+
+
     }
 }
