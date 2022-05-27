@@ -168,8 +168,32 @@ namespace Pdbc.Cli.App.Roslyn.Generation.IntegrationTests
                         .AddStatement($"_request = new {service.GenerationContext.ActionInfo.ApiRequestClassName.ToTestDataBuilder()}();"),
                     fullFilename);
 
-
+                entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName("Cleanup")
+                        .IsOverride(true)
+                    ,
+                    fullFilename);
                 entity = await service.GenerateVerifyResponseNotImplementedExceptionMethod(entity, fullFilename);
+            }
+            else
+            {
+                entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName("Setup")
+                        .IsOverride(true)
+                        .AddStatement($"_request = new {service.GenerationContext.ActionInfo.ApiRequestClassName.ToTestDataBuilder()}();"),
+                    fullFilename);
+
+                entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName("Cleanup")
+                        .IsOverride(true),
+                    fullFilename);
+
+                entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName("VerifyResponse")
+                        .AddParameter(service.GenerationContext.ActionInfo.ApiResponseClassNameOverride, "response")
+                        .IsOverride(true)
+                        .AddStatement($"response.Notifications?.HasErrors().ShouldBeFalse();"),
+                    fullFilename);
             }
 
         }

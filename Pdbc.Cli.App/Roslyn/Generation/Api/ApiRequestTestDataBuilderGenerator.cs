@@ -40,9 +40,11 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Api
 
             if (service.GenerationContext.ActionInfo.RequiresActionDto)
             {
+
+
+                entity = await service.AppendUsingStatement(entity, service.GenerationContext.GetNamespaceForDto(), fullFilename);
                 entity = await service.Save(entity, new ConstructorDeclarationSyntaxBuilder().WithName(className)
-                        .AddStatement(
-                            $"{service.GenerationContext.EntityName} = new {service.GenerationContext.ActionInfo.EntityActionName.ToDto().ToTestDataBuilder()}();"),
+                        .AddStatement($"{service.GenerationContext.EntityName} = new {service.GenerationContext.ActionInfo.EntityActionName.ToDto().ToTestDataBuilder()}();"),
                     fullFilename);
 
             }

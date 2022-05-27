@@ -198,3 +198,4 @@ D:\code\pdbc\Pdbc.Cli\Pdbc.Cli.App\obj\Debug\net5.0\AerCli.dll
 D:\code\pdbc\Pdbc.Cli\Pdbc.Cli.App\obj\Debug\net5.0\ref\AerCli.dll
 D:\code\pdbc\Pdbc.Cli\Pdbc.Cli.App\obj\Debug\net5.0\AerCli.pdb
 D:\code\pdbc\Pdbc.Cli\Pdbc.Cli.App\obj\Debug\net5.0\Pdbc.Cli.App.genruntimeconfig.cache
+D:\code\pdbc\Pdbc.Cli\Pdbc.Cli.App\obj\Debug\net5.0\Pdbc.Cli.App.csproj.AssemblyReference.cache

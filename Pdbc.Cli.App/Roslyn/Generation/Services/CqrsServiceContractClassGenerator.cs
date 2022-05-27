@@ -116,6 +116,20 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Services
                 //            $"return await Command<{service.GenerationContext.ActionInfo.ApiRequestClassName}, {service.GenerationContext.ActionInfo.CqrsInputClassName}, {service.GenerationContext.ActionInfo.CqrsOutputClassNameOverride}, {service.GenerationContext.ActionInfo.ApiResponseClassNameOverride}>(request); ")),
                 //    fullFilename);
             }
+            else 
+            {
+                entity = await service.GenerateCqrsStandardCommandMethod(entity, fullFilename);
+
+
+                //entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
+                //        .WithName(service.GenerationContext.ActionInfo.ActionOperationName)
+                //        .Async()
+                //        .WithReturnType($"Task<{service.GenerationContext.ActionInfo.ApiResponseClassNameOverride}>")
+                //        .AddParameter(service.GenerationContext.ActionInfo.ApiRequestClassName, "request")
+                //        .AddStatement(new StatementSyntaxBuilder(
+                //            $"return await Command<{service.GenerationContext.ActionInfo.ApiRequestClassName}, {service.GenerationContext.ActionInfo.CqrsInputClassName}, {service.GenerationContext.ActionInfo.CqrsOutputClassNameOverride}, {service.GenerationContext.ActionInfo.ApiResponseClassNameOverride}>(request); ")),
+                //    fullFilename);
+            }
 
         }
     }

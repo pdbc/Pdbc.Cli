@@ -111,7 +111,19 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Controller
             }
             else
             {
-                throw new NotImplementedException();
+                // Default Controller action
+                entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName(service.GenerationContext.ActionInfo.PublicActionOperationName)
+                        .AddParameter($"[FromBody] {service.GenerationContext.ActionInfo.ApiRequestClassName}", "request")
+                        .WithReturnType("Task<IActionResult>")
+                        .Async()
+                        .AddAttribute(@"HttpPost(""{id:long}"+$"/{service.GenerationContext.ActionInfo.ActionOperationName}\")")
+                        .AddAttribute($"Produces(typeof({service.GenerationContext.ActionInfo.ApiResponseClassNameOverride}))")
+                        .AddStatement($"var response = await _cqrsService.{service.GenerationContext.ActionInfo.ActionOperationName}(request);")
+                        .AddStatement("return Ok(response);"),
+                    fullFilename);
+
+                
             }
         }
 

@@ -7,7 +7,7 @@ namespace Pdbc.Cli.App.Context
 {
     public class GenerationContext
     {
-        private StartupParameters Parameters { get; }
+        public StartupParameters Parameters { get; }
         private GenerationConfiguration Configuration { get; }
 
         public GenerationContext(StartupParameters parameters,
@@ -19,17 +19,23 @@ namespace Pdbc.Cli.App.Context
             ActionInfo = new ActionInfoFactory().BuildActionInfoFor(this);
         }
 
+        private String _action;
+        public void SetAction(String action)
+        {
+            _action = action;
+            ActionInfo = new ActionInfoFactory().BuildActionInfoFor(this);
+        }
+
         public String EntityName => Parameters.EntityName;
         public String PluralEntityName => Parameters.PluralEntityName;
-        public String ActionName => Parameters.Action;
+        public String ActionName => _action ?? Parameters.Action;
 
         public string RootNamespace => Configuration.RootNamespace;
         public String ApplicationName => Configuration.ApplicationName;
 
 
         public IActionInfo ActionInfo { get; set; }
-
-        //public string ServiceContractName => $"{Parameters.PluralEntityName}Service";
+        
 
         public string CqrsServiceContractName => $"{Parameters.PluralEntityName}CqrsService";
         public string WebApiServiceContractName => $"WebApi{Parameters.PluralEntityName}Service";

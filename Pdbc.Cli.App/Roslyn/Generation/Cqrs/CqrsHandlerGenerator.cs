@@ -129,16 +129,6 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs
                 entity = await service.GenerateChangesHandlerVariable(entity, fullFilename);
                 entity = await service.GenerateMapperVariable(entity, fullFilename);
                 entity = await service.GenerateDbContextServiceVariable(entity, fullFilename);
-                //entity = await service.Save(entity, new VariableDeclarationSyntaxBuilder().WithName("_changesHandler")
-                //    .ForType($"IChangesHandler<{service.GenerationContext.ActionInfo.EntityActionName.ToDto().ToInterface()}, {service.GenerationContext.EntityName}>")
-                //    .WithIsReadonly(true), fullFilename);
-
-                //entity = await service.Save(entity, new VariableDeclarationSyntaxBuilder().WithName("_mapper")
-                //    .ForType("IMapper")
-                //    .WithIsReadonly(true), fullFilename);
-                //entity = await service.Save(entity, new VariableDeclarationSyntaxBuilder().WithName("_dbContextService")
-                //    .ForType($"I{service.GenerationContext.ApplicationName}DbContextService")
-                //    .WithIsReadonly(true), fullFilename);
 
                 entity = await service.Save(entity, new ConstructorDeclarationSyntaxBuilder().WithName(className)
                         .AddParameter(
@@ -158,36 +148,39 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Cqrs
                     ,
                     fullFilename);
 
-                entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
+
+                var method = new MethodDeclarationSyntaxBuilder()
                         .WithName("Handle")
                         .Async()
                         .WithReturnType($"Task<{outputCqrsClassname}>")
                         .AddParameter(inputCqrsClassName, "request")
                         .AddParameter("CancellationToken", "cancellationToken")
-                        .AddStatement(new StatementSyntaxBuilder($"{service.GenerationContext.EntityName} entity;"))
-                        .AddStatement(
-                            new StatementSyntaxBuilder($"if (request.{service.GenerationContext.EntityName}.Id.HasValue) "))
+                        .AddStatement($"{service.GenerationContext.EntityName} entity;")
+                        .AddStatement($"if (request.{service.GenerationContext.EntityName}.Id.HasValue) ")
                         .AddStatement(new BlockStatementSyntaxBuilder()
-                            .AddStatement(new StatementSyntaxBuilder(
-                                $"   entity = _repository.GetById(request.{service.GenerationContext.EntityName}.Id.Value);"))
-                            .AddStatement(new StatementSyntaxBuilder(
-                                $"   _changesHandler.ApplyChanges(entity, request.{service.GenerationContext.EntityName});"))
-                            .AddStatement(new StatementSyntaxBuilder($"   _repository.Update(entity);"))
+                            .AddStatement($"   entity = _repository.GetById(request.{service.GenerationContext.EntityName}.Id.Value);")
+                            .AddStatement($"   _changesHandler.ApplyChanges(entity, request.{service.GenerationContext.EntityName});")
+                            .AddStatement($"   _repository.Update(entity);")
                         )
-                        .AddStatement(new StatementSyntaxBuilder($" else "))
+                        .AddStatement($" else ")
                         .AddStatement(new BlockStatementSyntaxBuilder()
-                            .AddStatement(new StatementSyntaxBuilder(
-                                $"   entity = _factory.Create(request.{service.GenerationContext.EntityName});"))
-                            .AddStatement(new StatementSyntaxBuilder($"   _repository.Insert(entity);"))
+                            .AddStatement($"   entity = _factory.Create(request.{service.GenerationContext.EntityName});")
+                            .AddStatement($"   _repository.Insert(entity);")
                         )
-                        .AddStatement(new StatementSyntaxBuilder($""))
-                        .AddStatement(
-                            new StatementSyntaxBuilder($"await _dbContextService.SaveChangesAsync(cancellationToken);"))
-                        .AddStatement(new StatementSyntaxBuilder(
-                            $" return new {service.GenerationContext.ActionInfo.CqrsOutputClassName} {{ {service.GenerationContext.EntityName} = _mapper.Map<{service.GenerationContext.EntityName.ToDataDto()}>(entity) }};"))
-                    ,
+                        .AddStatement($"")
+                        .AddStatement($"await _dbContextService.SaveChangesAsync(cancellationToken);");
 
-                    fullFilename);
+                if (service.GenerationContext.ActionInfo.ShouldGenerateCqrsOutputClass)
+                {
+                    method.AddStatement(
+                        $" return new {service.GenerationContext.ActionInfo.CqrsOutputClassName} {{ {service.GenerationContext.EntityName} = _mapper.Map<{service.GenerationContext.EntityName.ToDataDto()}>(entity) }};");
+                }
+                else
+                {
+                    method.AddStatement("return await Nothing.AtAllAsync();");
+                }
+
+                entity = await service.Save(entity, method, fullFilename);
             }
             else
             {

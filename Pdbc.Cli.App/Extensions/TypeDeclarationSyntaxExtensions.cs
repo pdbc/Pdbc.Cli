@@ -25,8 +25,8 @@ namespace Pdbc.Cli.App.Extensions
             {
                 foreach (var v in variable.Declaration.Variables)
                 {
-                if (v.Identifier.ValueText == name)
-                    return variable;
+                    if (v.Identifier.ValueText == name)
+                        return variable;
                 }
             }
 
@@ -71,19 +71,6 @@ namespace Pdbc.Cli.App.Extensions
             var property = typeSyntax.FindMethodDeclarationSyntaxFor(name);
             return property != null;
         }
-
-
-        //public static ClassDeclarationSyntax AddPropertyIfNotExists(this ClassDeclarationSyntax entity, PropertyDeclarationSyntaxBuilder propertyBuilder)
-        //{
-        //    var identifier = propertyBuilder.GetIdentifier();
-        //    if (!entity.IsPropertyDefined(identifier))
-        //    {
-        //      entity = entity.AppendMember<ClassDeclarationSyntax>(propertyBuilder.Build());
-        //    }
-
-        //    return entity;
-        //}
-
 
         public static InterfaceDeclarationSyntax AddMethodToInterfaceIfNotExists(this InterfaceDeclarationSyntax entity, MethodDeclarationSyntaxBuilder methodBuilder)
         {

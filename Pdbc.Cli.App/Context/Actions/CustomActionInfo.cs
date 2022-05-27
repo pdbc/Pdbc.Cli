@@ -3,30 +3,25 @@ using Pdbc.Cli.App.Extensions;
 
 namespace Pdbc.Cli.App.Context.Actions
 {
-    public class StoreActionInfo : BaseActionInfo
+    public class CustomActionInfo : BaseActionInfo
     {
-        public StoreActionInfo(GenerationContext context) : base(context)
+        public CustomActionInfo(GenerationContext context) : base(context)
         {
-            //IsQueryAction = false;
             CqrsInputType = "Command";
             CqrsOutputType = "Result";
-
+            
             ShouldGenerateCqrsOutputClass = context.Parameters.ReturnDataDto;
-            //ShouldGenerateCqrsOutputClass = true;
 
-            RequiresDataDto = true;
-            RequiresFactory = true;
-            RequiresChangesHandler = true;
-            RequiresActionDto = true;
+            //RequiresDataDto = true;
+            //RequiresActionDto = true;
+            
 
-            IsStoreAction = true;
-
-            ActionOperationName = $"{context.ActionName}{context.EntityName}";
+            ActionOperationName = $"{context.ActionName}";
 
             CalculateValues();
 
             HttpMethodAttributeMethod = "Post";
-            HttpMethodAttributeUrl = $"{context.PluralEntityName}/" + "{id}";
+            HttpMethodAttributeUrl = $"{context.PluralEntityName}/" + "{id}" + $"/{ActionOperationName}";
 
             if (!context.Parameters.ReturnDataDto)
             {

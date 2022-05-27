@@ -23,8 +23,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Api
             if (entity == null)
             {
                 var entityNamespace = roslynProjectContext.GetNamespace(subfolders);
-
-                // TODO Get the correct base class 
+                
                 entity = new ClassDeclarationSyntaxBuilder()
                     .WithName(className)
                     .ForNamespace(entityNamespace)
@@ -32,7 +31,7 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Api
                     .AddAertssenFrameworkContractUsingStatements()
                     .AddBaseClass(service.GenerationContext.ActionInfo.ApiRequestBaseClassName)
                     .AddHttpMethodAttribute(service.GenerationContext.ActionInfo.HttpMethodAttributeUrl,
-                        service.GenerationContext.ActionInfo.HttpMethodAttributeMethod)
+                                            service.GenerationContext.ActionInfo.HttpMethodAttributeMethod)
                     .Build();
                 ;
                 await service.FileHelperService.WriteFile(fullFilename, entity);

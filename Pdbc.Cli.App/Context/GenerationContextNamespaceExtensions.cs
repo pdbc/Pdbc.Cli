@@ -53,7 +53,12 @@
 
             return result;
         }
+        public static string GetNamespaceForDtoTestDataBuilders(this GenerationContext context)
+        {
+            var result = $"{context.RootNamespace}.Tests.Helpers.DTO.{context.PluralEntityName}";
 
+            return result;
+        }
         public static string GetNamespaceForRequests(this GenerationContext context)
         {
             var result = $"{context.RootNamespace}.Api.Contracts.Requests.{context.PluralEntityName}";

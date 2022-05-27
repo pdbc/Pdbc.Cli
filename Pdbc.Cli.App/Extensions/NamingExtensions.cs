@@ -4,16 +4,6 @@ namespace Pdbc.Cli.App.Extensions
 {
     public static class NamingExtensions
     {
-
-        //public static String ToCqrsService(this string name)
-        //{
-        //    return $"{name}CqrsService";
-        //}
-        //public static String ToWebApiService(this string name)
-        //{
-        //    return $"WebApi{name}Service";
-        //}
-
         public static String ToSpecification(this string name, string subname = null)
         {
             if (subname == null)

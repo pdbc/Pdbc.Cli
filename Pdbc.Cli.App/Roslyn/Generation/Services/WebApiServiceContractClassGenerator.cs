@@ -95,6 +95,18 @@ namespace Pdbc.Cli.App.Roslyn.Generation.Services
                             $"return await PostAsync<{service.GenerationContext.ActionInfo.ApiRequestClassName},{service.GenerationContext.ActionInfo.ApiResponseClassNameOverride}>(request);")),
                     fullFilename);
             }
+            else
+            {
+                entity = await service.Save(entity, new MethodDeclarationSyntaxBuilder()
+                        .WithName(service.GenerationContext.ActionInfo.ActionOperationName)
+                        .Async()
+                        .WithReturnType($"Task<{service.GenerationContext.ActionInfo.ApiResponseClassNameOverride}>")
+                        .AddParameter(service.GenerationContext.ActionInfo.ApiRequestClassName, "request")
+                        .AddStatement(new StatementSyntaxBuilder(
+                            $"return await PostAsync<{service.GenerationContext.ActionInfo.ApiRequestClassName},{service.GenerationContext.ActionInfo.ApiResponseClassNameOverride}>(request, \"\");")),
+                    //TODO Include "subroute"
+                    fullFilename);
+            }
         }
     }
 }

@@ -12,7 +12,12 @@ namespace Pdbc.Cli.App.Roslyn.Builders.SyntaxBuilders
             _statements.Add(statementSyntaxBuilder);
             return this;
         }
-
+        public BlockStatementSyntaxBuilder AddStatement(string statement)
+        {
+            var statementSyntaxBuilder = new StatementSyntaxBuilder(statement);
+            _statements.Add(statementSyntaxBuilder);
+            return this;
+        }
         public StatementSyntax Build()
         {
             var syntaxList = new List<StatementSyntax>();

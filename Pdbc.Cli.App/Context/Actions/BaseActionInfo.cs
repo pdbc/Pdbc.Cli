@@ -15,8 +15,10 @@ namespace Pdbc.Cli.App.Context.Actions
             this.ShouldGenerateCqrs = true;
 
             //this.ActionName = context.ActionName;
-            this.ActionEntityName = $"{context.ActionName}{context.EntityName}"; // ex.. GetRoute, StoreAddress, CalculateInvoice
-            this.EntityActionName = $"{context.EntityName}{context.ActionName}"; // ex.RouteGet, AddressStore, InvoiceCalculate
+            this.ActionEntityName =
+                $"{context.ActionName}{context.EntityName}"; // ex.. GetRoute, StoreAddress, CalculateInvoice
+            this.EntityActionName =
+                $"{context.EntityName}{context.ActionName}"; // ex.RouteGet, AddressStore, InvoiceCalculate
             //this.FullActionName = $"{context.ActionName}{context.PluralEntityName}";
             ActionOperationName = $"{context.ActionName}{context.EntityName}";
             PublicActionOperationName = $"{context.ActionName}{context.EntityName}";
@@ -45,7 +47,7 @@ namespace Pdbc.Cli.App.Context.Actions
             //CqrsServiceContractName = $"{context.PluralEntityName}CqrsService";
 
         }
-        
+
         public void CalculateValues()
         {
             CqrsInputClassName = $"{ActionEntityName}{CqrsInputType}";
@@ -56,6 +58,8 @@ namespace Pdbc.Cli.App.Context.Actions
             CqrsOutputClassNameOverride = CqrsOutputClassName;
         }
 
+
+
         //public string ActionName { get; set; }
         public string ActionEntityName { get; set; }
         public string EntityActionName { get; set; }
@@ -63,7 +67,7 @@ namespace Pdbc.Cli.App.Context.Actions
         public string ActionOperationName { get; set; }
         public string PublicActionOperationName { get; set; }
 
-        
+
 
         #region Cqrs & API Base classes
         public string CqrsInputType { get; set; }
@@ -87,7 +91,7 @@ namespace Pdbc.Cli.App.Context.Actions
 
         public string CqrsOutputClassNameOverride { get; set; }
         public string ApiResponseClassNameOverride { get; set; }
-        
+
         public bool ShouldGenerateCqrs { get; set; }
 
 
@@ -113,6 +117,7 @@ namespace Pdbc.Cli.App.Context.Actions
         public bool IsWithoutResponse { get; set; }
 
 
+        //public String UrlPostfix { get; set; }
         public String HttpMethodAttributeUrl { get; set; }
 
         public String HttpMethodAttributeMethod { get; set; }

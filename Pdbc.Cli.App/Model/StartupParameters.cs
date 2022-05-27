@@ -35,6 +35,9 @@ namespace Pdbc.Cli.App.Model
         [Option('r', "returnDataDto", Required = false, HelpText = "Indicates that the action should return a response (only for commands, which by default return nothing).", Default = false)]
         public Boolean ReturnDataDto { get; set; }
 
+        [Option('m', "mode", Required = false, HelpText = "The mode you want this generation to run in (single/crud).", Default = "single")]
+        public string Mode { get; set; }
+
 
         public void WriteParameters()
         {
@@ -45,6 +48,7 @@ namespace Pdbc.Cli.App.Model
             Console.WriteLine($" == PluralEntityName: {PluralEntityName}");
             Console.WriteLine($" == Action: {Action}");
             Console.WriteLine($" == ReturnDataDto: {ReturnDataDto}");
+            Console.WriteLine($" == Mode: {Mode}");
         }
 
     }

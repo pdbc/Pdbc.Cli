@@ -17,11 +17,15 @@ namespace Pdbc.Cli.App.Roslyn
 
         private readonly IDictionary<String, RoslynProjectContext> _roslynProjects;
 
+        public static void Initialize()
+        {
+            MSBuildLocator.RegisterDefaults();
+
+        }
         public RoslynSolutionContext(String solutionFileName, GenerationConfiguration configuration)
         {
             _configuration = configuration;
-            MSBuildLocator.RegisterDefaults();
-
+            
             Workspace = MSBuildWorkspace.Create();
             Solution = Workspace.OpenSolutionAsync(solutionFileName)
                 .GetAwaiter()
@@ -52,6 +56,11 @@ namespace Pdbc.Cli.App.Roslyn
             }
 
             return Solution.Projects.FirstOrDefault(x => x.Name.Contains(name));
+        }
+
+        public void RefreshProjects()
+        {
+            _roslynProjects.Clear();
         }
     }
 }

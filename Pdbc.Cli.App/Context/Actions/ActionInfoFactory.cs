@@ -31,11 +31,11 @@ namespace Pdbc.Cli.App.Context.Actions
                     
                 default:
 
-                    
+                    return new CustomActionInfo(context);
                     break;
             }
 
-            throw new NotImplementedException("No action foresee");
+            throw new NotImplementedException("No action foreseen for " + context.ActionInfo);
         }
     }
 }

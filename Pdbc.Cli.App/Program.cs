@@ -35,17 +35,26 @@ namespace Pdbc.Cli.App
 
             var startupParameter = new StartupParameters
             {
-                EntityName = "Address",
-                PluralEntityName = "Addresses",
-
+                //EntityName = "Address",
+                //PluralEntityName = "Addresses",
 
                 //EntityName = "Route",
                 //PluralEntityName = "Routes",
+
+                //EntityName = "SynchronizationDate",
+                //PluralEntityName = "SynchronizationDates",
+
+                EntityName = "Project",
+                PluralEntityName = "Projects",
+
                 //Action = "List"
                 //Action = "Get"
                 //Action = "Delete"
-                //Action = "Store"
-                Action = "CalculateLongitudeLatitude"
+                //Action = "Store",
+                //Action = "CalculateDistance",
+
+                ReturnDataDto =false,
+                Mode = "CRUD"
             };
 
             RunOptions(startupParameter);
@@ -82,6 +91,8 @@ namespace Pdbc.Cli.App
             cliConfiguration.ApplicationName = "Locations";
             cliConfiguration.RootNamespace = "Locations";
 
+            RoslynSolutionContext.Initialize();
+
             // Find the solution (what if we have multiple solutions ??)
             var solutionPath = fileHelperService.GetSolutionPathFrom(cliConfiguration.BasePath);
             Console.WriteLine($"Found the solution to change {solutionPath}");
@@ -90,15 +101,49 @@ namespace Pdbc.Cli.App
             Console.WriteLine($"Parsed the solution {solutionPath} to setup the workspace");
             
             // Generation Context (how will we handle multiple context (for example LIST/GET/STORE/DELETE in one go)
-            var generationContext = new GenerationContext(startupParameters, cliConfiguration);
+            if (startupParameters.Mode == "Single")
+            {
+                var generationContext = new GenerationContext(startupParameters, cliConfiguration);
 
-            Generate(roslySolutionContext, fileHelperService, generationContext)
-                .GetAwaiter()
-                .GetResult();
+                Generate(roslySolutionContext, fileHelperService, generationContext)
+                    .GetAwaiter()
+                    .GetResult();
+            }
+            else
+            {
+                var actions = new List<String>()
+                {
+                    "List", "Get", "Delete", "Store"
+                };
+                foreach (var action in actions)
+                {
+                    var generationContext = new GenerationContext(startupParameters, cliConfiguration);
+                    generationContext.SetAction(action);
+
+                    Generate(roslySolutionContext, fileHelperService, generationContext)
+                        .GetAwaiter()
+                        .GetResult();
+
+
+                    //roslySolutionContext.RefreshProjects();
+
+                    // Re-parse the solution => we should apply changes to files as well to the projects/solution to avoid this step...
+                    solutionPath = fileHelperService.GetSolutionPathFrom(cliConfiguration.BasePath);
+                    Console.WriteLine($"Found the solution to change {solutionPath}");
+
+                    roslySolutionContext = new RoslynSolutionContext(solutionPath, cliConfiguration);
+                    Console.WriteLine($"Parsed the solution {solutionPath} to setup the workspace");
+                }
+                
+
+
+
+            }
         }
 
         private static async Task Generate(RoslynSolutionContext roslySolutionContext,
-            FileHelperService fileHelperService, GenerationContext generationContext)
+            FileHelperService fileHelperService, 
+            GenerationContext generationContext)
         {
             var generationService = new GenerationService(roslySolutionContext, fileHelperService, generationContext);
 
